@@ -1,0 +1,3 @@
+.theia/
+.gitpod*
+init_tasks.sh

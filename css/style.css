@@ -1,0 +1,241 @@
+@import url('https://fonts.googleapis.com/css?family=Calistoga|Gloria+Hallelujah|Special+Elite&display=swap');
+
+h1 {
+    font-family: 'Gloria Hallelujah', cursive;
+}
+
+h3, h4, .btn, .trip-header {
+    font-family: 'Calistoga', cursive;
+
+/* } */
+}
+
+body, .trip-overview {
+    font-family: 'Special Elite', cursive;
+}
+
+.nav-wrapper {
+    background-color: rgb(231, 255, 254);
+}
+
+.logo {
+    color: rgb(80, 129, 140);
+    border-bottom: 3px solid rgb(207, 255, 254);
+    padding-bottom: 5px;
+    max-width: 400px;
+    margin: 20px auto 20px auto;
+    text-align: center;
+}
+
+.logo-container {
+    width: 100%;
+    margin-bottom: 5vh;
+}
+
+.logo i {
+    color: #F57F17;
+    transform: rotate(-50deg);
+}
+
+.page-header {
+    margin: auto;
+    width: 400px;
+    text-align: center;
+    color: #000;
+    font-size: 2.5em;
+}
+
+.page-header a {
+    color: #000;
+}
+
+.my-left {
+    float: left;
+}
+
+.my-right {
+    float: right;
+}
+
+nav {
+    margin-bottom: 50px;
+}
+
+.container {
+    /* background-color: teal; */
+}
+
+/* button styling */
+
+.my-btn {
+    text-transform: lowercase;
+    font-size: 18px;
+    border-radius: 6px;
+}
+
+.my-btn-new {
+    background-color: rgb(104, 231, 180);
+}
+
+.my-btn-update {
+    background-color: rgb(104, 208, 231);
+}
+
+.my-btn-delete {
+    background-color: rgb(231, 126, 104);
+}
+
+/* override materialize hover colors */
+.my-btn-new:hover {
+    background-color: rgba(104, 231, 180, 0.5);
+}
+
+.my-btn-update:hover {
+    background-color: rgba(104, 208, 231, 0.5);
+}
+
+.my-btn-delete:hover {
+    background-color: rgba(231, 126, 104, 0.5);
+}
+
+
+/***
+    general styles
+ ***/
+
+.page-description {
+
+}
+
+
+/***
+    styling for trip overview page
+ ***/
+.trip-container {    
+    margin-bottom: 70px;
+    max-width: 700px;
+    margin: 0 auto 70px auto;
+}
+
+.trip-container:hover {
+    cursor: pointer;
+}
+
+.trip-header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+
+    padding: 10px 5px 5px 5px;
+    font-size: 40px;
+    line-height: 1;
+
+    background-color: rgb(246, 248, 248);
+    border: 2px solid rgb(104, 208, 231);
+    border-bottom: 0;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+}
+
+.trip-container:hover .trip-header {
+    background-color:  rgb(104, 208, 231);
+    color: #fff;
+}
+
+
+.trip-header .from-date, .trip-header .to-date {
+    display: inline-flex;
+    width: 40%;
+    max-width: 150px;
+}
+
+
+.trip-header .big-date {
+    font-size: 50px;
+    font-weight: bold;
+    line-height: 1;
+}
+
+.trip-header .small-date {
+    padding-left: 20px;
+    line-height: 1.1;
+    letter-spacing: 4px;
+    font-size: 22px;
+    text-transform: uppercase;
+}
+
+
+
+.trip-body {
+    padding: 10px;
+    font-size: 16px;
+    border: 2px solid rgb(104, 208, 231);
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+
+}
+
+.trip-item {
+    margin-top: 5px;
+    display: inline-block;
+    width: 100%;
+}
+
+.trip-item .title {
+    font-weight: bold;
+    float: left;
+}
+
+.trip-item .description {
+    float: right;
+}
+
+
+.trip-btns {
+/* add some css */
+    float: right;
+}
+
+.trip-btns .my-btn {
+    margin: 10px 2px;
+}
+
+
+/***
+    styles for trip_detailed page
+ ***/
+
+ .trip-overview {
+
+ }
+
+
+ .trip-breakdown {
+     
+ }
+
+ .trip-month {
+     margin-bottom: 40px;
+ }
+
+ .trip-month-header {
+     text-transform: uppercase;
+     border-bottom: 4px solid rgb(144, 217, 235);
+ }
+
+ .trip-stops {
+     margin-left: 20px;
+ }
+
+ .trip-stops li {
+    height: 40px;
+    line-height: 40px;
+
+    font-size: 20px;
+
+    background-color: rgb(247, 248, 248);
+    border-radius: 6px;
+
+    margin-bottom: 10px;
+    padding: 0 10px;
+ }
