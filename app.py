@@ -49,7 +49,6 @@ def show_trips():
 #
 # trips functionality
 #
-
 @app.route('/trip/new/')
 def trip_new():
     return render_template('new_trip.html')
