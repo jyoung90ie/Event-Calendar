@@ -8,10 +8,12 @@ load_dotenv()
 
 app = Flask(__name__)
 
-# connect to mongodb
-MONGODB_URI = os.getenv("MONGO_URI")
+# connect to mongoDB
+# MONGODB_URI = os.getenv("MONGO_URI")
+MONGODB_URI = os.environ.get("MONGO_URI")
 DB_NAME = "travelPal"
-# COLLECTION_NAME = "myFirstMDB"
+
+# connection function from code institute
 
 
 def mongo_connect(url):
@@ -23,19 +25,28 @@ def mongo_connect(url):
         print("Could not connect to MongoDB: %s") % e
 
 
-conn = mongo_connect(MONGODB_URI)
+# connect to MongoDB
+client = mongo_connect(MONGODB_URI)
+# select relevant db
+db = client[DB_NAME]
+
+# store collections
+colTrips = db.trips
+colStops = db.trips
+colUsers = db.trips
 
 # setup path routing
-
-
 @app.route('/')
 @app.route('/trips/')
 @app.route('/trips/all/')
 def show_trips():
-    return render_template('show_trips.html', trips=conn[DB_NAME]['trips'])
+    # pass through the trips collection, using .find() to return all contents of collection enabling iteration
+    return render_template('show_trips.html', trips=colTrips.find())
 
+
+#
 # trips functionality
-
+#
 
 @app.route('/trip/new/')
 def trip_new():
@@ -58,7 +69,3 @@ if __name__ == '__main__':
     app.run(host=os.environ.get('IP'),
             port=int(os.environ.get('PORT')),
             debug=os.environ.get('DEBUG'))
-
-
-# users = conn[DBS_NAME]['trips']
-# stops = conn[DBS_NAME]['trips']
