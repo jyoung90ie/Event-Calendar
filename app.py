@@ -9,8 +9,9 @@ load_dotenv()
 app = Flask(__name__)
 
 # connect to mongoDB
-# MONGODB_URI = os.getenv("MONGO_URI")
-MONGODB_URI = os.environ.get("MONGO_URI")
+# when using Gitpod/Heroku environ variables
+MONGODB_URI = os.getenv("MONGO_URI")
+# MONGODB_URI = os.environ.get("MONGO_URI") # when using dotenv
 DB_NAME = "travelPal"
 
 # connection function from code institute
@@ -66,6 +67,6 @@ def trip_new_stop():
 
 
 if __name__ == '__main__':
-    app.run(host=os.environ.get('IP'),
-            port=int(os.environ.get('PORT')),
-            debug=os.environ.get('DEBUG'))
+    app.run(host=os.getenv('IP'),
+            port=int(os.getenv('PORT')),
+            debug=os.getenv('DEBUG'))
