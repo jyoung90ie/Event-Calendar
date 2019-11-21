@@ -1,3 +1,5 @@
 .theia/
 .gitpod*
 init_tasks.sh
+.env
+__pycache__/
