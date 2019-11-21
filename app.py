@@ -36,6 +36,7 @@ colTrips = db.trips
 colStops = db.trips
 colUsers = db.trips
 
+
 # setup path routing
 @app.route('/')
 @app.route('/trips/')
