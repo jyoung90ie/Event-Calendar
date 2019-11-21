@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<title>travelPal - {% block title %}{% endblock %}</title>
+	<!-- Compiled and minified CSS -->
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+	<!-- my own styles -->
+	<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+
+</head>
+
+<body>
+	<header class="logo-container">
+		<h1 class="logo">travel<i class="medium material-icons">airplanemode_active</i>Pal</h1>
+	</header>
+	<nav>
+		<div class="nav-wrapper">
+			<div class="page-header">
+				<span class="my-left"><a href="#"><</a></span>
+				<span>{% block header %}{% endblock %}</span>
+				<span class="my-right"><a href="#">></a></span>
+
+			</div>
+		</div>
+	</nav>
+	{% block content %}{% endblock %}
+	</main>
+
+	<!-- Compiled and minified JavaScript -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js">
+	</script>
+	<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+</body>
+
+</html>

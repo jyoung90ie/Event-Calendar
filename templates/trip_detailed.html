@@ -1,0 +1,48 @@
+{% extends "template.html" %}
+
+{% block title %}trip detail{% endblock %}
+{% block header %}trip detail{% endblock %}
+
+{% block content %}
+<section class="page-description">Some text</section>
+<header class="trip-overview center">
+	<h2>South East Asia</h2>
+	<p>19 January 2020</p>
+	<p>to</p>
+	<p> 31 December 2020</p>
+</header>
+
+<section class="trip-breakdown">
+	<article class="trip-month">
+		<h4 class="trip-month-header">January 2020</h4>
+		<!-- clicking on this will expand the article to show all the detail -->
+		<ul class="trip-stops">
+			<li>City/town [xx night(s)]</li>
+			<li>City/town [xx night(s)]</li>
+			<li>City/town [xx night(s)]</li>
+			<li>City/town [xx night(s)]</li>
+			<li>City/town [xx night(s)]</li>
+			<li>City/town [xx night(s)]</li>
+		</ul>
+	</article>
+	<article class="trip-month">
+		<h4 class="trip-month-header">February 2020</h4>
+		<!-- clicking on this will expand the article to show all the detail -->
+		<ul class="trip-stops">
+			<li>City/town [xx night(s)]</li>
+			<li>City/town [xx night(s)]</li>
+			<li>City/town [xx night(s)]</li>
+			<li>City/town [xx night(s)]</li>
+			<li>City/town [xx night(s)]</li>
+			<li>City/town [xx night(s)]</li>
+		</ul>
+	</article>
+</section>
+
+<!-- floating link to add a new trip -->
+<aside class="fixed-action-btn">
+	<a href="" class="btn my-btn my-btn-new">
+		add stop
+	</a>
+</aside>
+{% endblock %}

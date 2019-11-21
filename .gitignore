@@ -3,3 +3,4 @@
 init_tasks.sh
 .env
 __pycache__/
+templates/originals/
