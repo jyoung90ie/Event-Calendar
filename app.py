@@ -134,21 +134,21 @@ def trip_new():
             name = str(request.form.get('trip-name'))
             # convert checkbox 'on' or 'off' to boolean value for storing
             public = True if request.form.get('public') == 'on' else False
-        except:
-            return 'Start date is not correct format'
 
-        # create new entry if validation is successful
-        newTrip = {
-            'name': name,
-            'start_date': startdate,
-            'end_date': enddate,
-            'owner_id': ObjectId(user_id),
-            'public': public
-        }
-        mongo.db.trips.insert_one(newTrip)
+            # create new entry if validation is successful
+            newTrip = {
+                'name': name,
+                'start_date': startdate,
+                'end_date': enddate,
+                'owner_id': ObjectId(user_id),
+                'public': public
+            }
+            mongo.db.trips.insert_one(newTrip)
 
-        return redirect(url_for('show_trips'))
-
+            return redirect(url_for('show_trips'))
+        except Exception as e:
+            print(e)
+            return 'Input error'
     else:
         return render_template('trip_new.html')
 
@@ -160,7 +160,35 @@ def trip_update(trip_id):
         # need validation (all fields proper, id exists, id is owned by user)
         # then iterate through field values and update in db
         # then redirect back to all trips
-        return 'test'
+        try:
+            # convert form date strings to datetime
+            startdate = datetime.strptime(
+                request.form.get('start-date'), '%d %b %Y')
+            enddate = datetime.strptime(
+                request.form.get('end-date'), '%d %b %Y')
+            name = str(request.form.get('trip-name'))
+            # convert checkbox 'on' or 'off' to boolean value for storing
+            public = True if request.form.get('public') == 'on' else False
+
+            # create new entry if validation is successful
+            updateCriteria = {
+                '_id': ObjectId(trip_id)
+            }
+            updateQuery = {
+                '$set': {
+                    'name': name,
+                    'start_date': startdate,
+                    'end_date': enddate,
+                    'public': public
+                }
+            }
+
+            mongo.db.trips.update_one(updateCriteria, updateQuery)
+
+            return redirect(url_for('show_trips'))
+        except Exception as e:
+            print(e)
+            return 'Input error'
     else:
         # create functionality to pull trip information from db
         # then populate this data into the form
