@@ -1,42 +1,36 @@
 {% extends "template.html" %}
 
 {% block title %}trip detail{% endblock %}
-{% block header %}trip detail{% endblock %}
+{% block header %}
+<a href="{{ url_for('show_trips') }}" class="breadcrumb">All Trips</a>
+<a href="{{ url_for('show_trips') }}" class="breadcrumb">My Trips</a>
+<a href="#!" class="breadcrumb">Detailed Information for Trip: <strong>{{ trip['name'] }}</strong></a>
+{% endblock %}
 
 {% block content %}
-<section class="page-description">Some text</section>
+<!-- <section class="page-description">Some text</section> -->
 <header class="trip-overview center">
-	<h2>South East Asia</h2>
-	<p>19 January 2020</p>
-	<p>to</p>
-	<p> 31 December 2020</p>
+	<h2>{{ trip['name'] }}</h2>
+	<p>{{ trip['start_date'].strftime('%d %B %Y') }} to {{ trip['end_date'].strftime('%d %B %Y') }}</p>
 </header>
 
 <section class="trip-breakdown">
+	{% if stops.count() %}
+
 	<article class="trip-month">
-		<h4 class="trip-month-header">January 2020</h4>
+		<h4 class="trip-month-header">MMMM YY</h4>
 		<!-- clicking on this will expand the article to show all the detail -->
+		{% for stop in stops %}
 		<ul class="trip-stops">
-			<li>City/town [xx night(s)]</li>
-			<li>City/town [xx night(s)]</li>
-			<li>City/town [xx night(s)]</li>
-			<li>City/town [xx night(s)]</li>
-			<li>City/town [xx night(s)]</li>
-			<li>City/town [xx night(s)]</li>
+			<li>{{ stop['country']}} - {{stop['city/town']}} [{{ stop['duration'] }} nights]</li>
 		</ul>
+		{% endfor %}
 	</article>
-	<article class="trip-month">
-		<h4 class="trip-month-header">February 2020</h4>
-		<!-- clicking on this will expand the article to show all the detail -->
-		<ul class="trip-stops">
-			<li>City/town [xx night(s)]</li>
-			<li>City/town [xx night(s)]</li>
-			<li>City/town [xx night(s)]</li>
-			<li>City/town [xx night(s)]</li>
-			<li>City/town [xx night(s)]</li>
-			<li>City/town [xx night(s)]</li>
-		</ul>
-	</article>
+
+	{% else %}
+	<h4 class="center">This Trip does not have any Stops. You can add a Stop by clicking 'Add Stop' at the bottom of
+		this page.</h4>
+	{% endif %}
 </section>
 
 <!-- floating link to add a new trip -->
