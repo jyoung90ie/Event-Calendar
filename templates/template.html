@@ -17,26 +17,80 @@
 
 <body>
 	<header class="logo-container">
-		<h1 class="logo">travel<i class="medium material-icons">airplanemode_active</i>Pal</h1>
+		<h1 class="logo"><a href="/">travel<i class="medium material-icons">airplanemode_active</i>Pal</a></h1>
 	</header>
 	<nav>
 		<div class="nav-wrapper">
-			<div class="page-header">
-				<span class="my-left"><a href="#"><</a></span>
-				<span>{% block header %}{% endblock %}</span>
-				<span class="my-right"><a href="#">></a></span>
+			<!--  <div class="page-header"> -->
 
-			</div>
+			<!-- </div> -->
+			<a href="#" data-target="mobile-menu" class="sidenav-trigger"><i class="material-icons">menu</i></a>
+			<ul class="right hide-on-med-and-down">
+				<li><a href="{{ url_for('show_trips') }}">All Trips</a></li>
+				<li><a href="{{ url_for('show_trips') }}">My Trips</a></li>
+				<li><a href="{{ url_for('trip_new') }}">Create Trip</a></li>
+				<li><a href="{{ url_for('user_new') }}">Register</a></li>
+				<li><a href="{{ url_for('user_login') }}">Login</a></li>
+				<li><a href="{{ url_for('user_logout') }}">Logout</a></li>
+			</ul>
 		</div>
 	</nav>
-	{% block content %}{% endblock %}
+
+	<!-- mobile navbar (hidden on larger devices) -->
+	<ul class="sidenav" id="mobile-menu">
+		<li><a href="{{ url_for('show_trips') }}">All Trips</a></li>
+		<li><a href="{{ url_for('show_trips') }}">My Trips</a></li>
+		<li><a href="{{ url_for('trip_new') }}">Create Trip</a></li>
+		<li><a href="{{ url_for('user_new') }}">Register</a></li>
+		<li><a href="{{ url_for('user_login') }}">Login</a></li>
+		<li><a href="{{ url_for('user_logout') }}">Logout</a></li>
+	</ul>
+
+	<main class="container">
+		<nav class="breadcrumb-nav">
+			<div class="nav-wrapper">
+				<div class="col s12">
+					{% block header %}{% endblock %}
+				</div>
+			</div>
+		</nav>
+		<!-- <div class="page-header center"></div> -->
+		{% block content %}{% endblock %}
 	</main>
 
+
 	<!-- Compiled and minified JavaScript -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"
+		integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js">
 	</script>
 	<script src="{{ url_for('static', filename='js/main.js') }}"></script>
 
+	<!-- initialise materialize js elements  -->
+	<script>
+		let sidenavOptions = {
+            edge: 'left',
+            draggable: true,
+            inDuration: 250,
+            outDuration: 200,
+            onOpenStart: null,
+            onOpenEnd: null,
+            onCloseStart: null,
+            onCloseEnd: null,
+            preventScrolling: true
+        };
+
+        let datepickerOptions = {
+            autoClose: true,
+            format: 'dd mmm yyyy'
+        };
+
+		$(document).ready(function(){
+            $('.sidenav').sidenav();
+            $('.datepicker').datepicker(datepickerOptions);
+        });
+	{% block js %}{% endblock %}
+	</script>
 </body>
 
 </html>
