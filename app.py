@@ -82,7 +82,7 @@ def show_trips():
                     "$max": "$end_date"
                 },
                 "country": {
-                    "$max": "$country"
+                    "$max": "$stops.country"
                 },
                 "name": {
                     "$max": "$name"
@@ -211,6 +211,9 @@ def trip_delete(trip_id):
     # check if any results were returned by the query - i.e. does this user
     # own this trip?
     if trip:
+        # add query to delete all stops associated with this trip then delete
+        # the trip
+
         # if user owns this entry then delete
         mongo.db.trips.delete_one(query)
 
