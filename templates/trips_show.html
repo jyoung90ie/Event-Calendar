@@ -1,0 +1,78 @@
+{% extends "template.html" %}
+
+{% block title %}all trips{% endblock %}
+{% block header %}
+<a href="{{ url_for('show_trips') }}" class="breadcrumb">My Trips</a>
+{% endblock %}
+
+{% block content %}
+<!-- trip container -->
+
+{% if message %}
+<p>{{ message }}</p>
+{% endif %}
+
+{% for trip in trips %}
+
+<!-- <section class="trip-container"> -->
+
+<!-- 
+trip['start_date'].strftime("%b")
+trip['end_date'].strftime("%b")
+-->
+<section class="trip-container">
+	<a href="{{ url_for('trip_detailed', trip_id=trip['_id']) }}">
+		<header class="trip-header">
+			<div class="from-date">
+				<div class="big-date">{{ trip['start_date'].day }}</div>
+				<div class="small-date">{{ trip['start_date'].strftime('%b') }} {{ trip['start_date'].year }}</div>
+			</div>
+			<div class="trip-header-to">to</div>
+			<div class="to-date">
+				<div class="big-date">{{ trip['end_date'].day }}</div>
+				<div class="small-date">{{ trip['end_date'].strftime('%b') }} {{ trip['end_date'].year }}</div>
+			</div>
+		</header>
+		<article class="trip-body">
+			<div class="trip-item">
+				<div class="title">trip name:</div>
+				<div class="description">{{ trip['name'] }}</div>
+			</div>
+			<div class="trip-item">
+				<div class="title">country:</div>
+				<div class="description">Thailand</div>
+			</div>
+			<div class="trip-item">
+				<div class="title">duration (nights):</div>
+				<div class="description">{{ trip['duration'] }}</div>
+			</div>
+			<div class="trip-item">
+				<div class="title">number of stops:</div>
+				<div class="description">{{ trip['number_of_stops']}}</div>
+			</div>
+			<div class="trip-item">
+				<div class="title">cost:</div>
+				<div class="description">{{ trip['total_cost'] }}</div>
+			</div>
+		</article>
+	</a>
+
+	<footer class="trip-btns right">
+		<a href="{{ url_for('trip_update', trip_id=trip['_id']) }}" class="btn my-btn my-btn-update">
+			update
+		</a>
+		<a href="{{ url_for('trip_delete', trip_id=trip['_id']) }}" class="btn my-btn my-btn-delete">
+			delete
+		</a>
+	</footer>
+</section>
+
+{% endfor %}
+
+<!-- floating link to add a new trip -->
+<aside class="fixed-action-btn">
+	<a href="{{ url_for('trip_new') }}" class="btn my-btn my-btn-new">
+		new trip
+	</a>
+</aside>
+{% endblock %}
