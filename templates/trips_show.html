@@ -41,10 +41,10 @@ trip['end_date'].strftime("%b")
 				<div class="title">trip name:</div>
 				<div class="description">{{ trip['name'] }}</div>
 			</div>
-			<!-- <div class="trip-item">
+			<div class="trip-item">
 				<div class="title">user:</div>
 				<div class="description">{{ trip['owner_id'] }}</div>
-			</div> -->
+			</div>
 			<div class="trip-item">
 				<div class="title">country:</div>
 				<div class="description">{{ trip['country'] if trip['country'] else 'N/A - no stops added' }}</div>
@@ -63,11 +63,11 @@ trip['end_date'].strftime("%b")
 				<div class="description">{{ trip['total_cost'] if trip['total_cost'] else 'N/A - no stops added' }}
 				</div>
 			</div>
-			<!-- <div class="trip-item">
+			<div class="trip-item">
 				<div class="title">public?</div>
 				<div class="description">{{ 'Yes' if trip['public'] else 'No' }}
 				</div>
-			</div> -->
+			</div>
 		</article>
 	</a>
 
