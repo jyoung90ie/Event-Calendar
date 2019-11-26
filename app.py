@@ -30,19 +30,29 @@ user_id = ''
 #
 @app.route('/')
 @app.route('/trips/')
-@app.route('/trips/all/')
-def show_trips():
+@app.route('/trips/<show>/')
+def show_trips(show='all'):
     print('show_trips(): user_id = ' + str(user_id))
-    # pass through the trips collection, using .find() to return all contents
-    # of collection enabling iteration
-    agg = [
-        {
+
+    if show == 'user':
+        queryFilter = {
+            "$match": {
+                "$or":
+                    [{"owner_id": user_id}]
+            }
+        }
+    else:
+        queryFilter = {
             "$match": {
                 "$or":
                     [{"owner_id": user_id},
                      {"public": True}]
             }
-        },
+        }
+    # pass through the trips collection, using .find() to return all contents
+    # of collection enabling iteration
+    agg = [
+        queryFilter,
         {"$lookup": {"from": "stops", "localField": "_id",
                      "foreignField": "trip_id", "as": "stops"}
          },
@@ -131,7 +141,7 @@ def show_trips():
 
     return render_template('trips_show.html',
                            trips=mongo.db.trips.aggregate(agg),
-                           user_id=user_id)
+                           user_id=user_id, trips_showing=show)
 
 
 @app.route('/trip/new/', methods=['POST', 'GET'])
@@ -178,7 +188,7 @@ def set_username():
     if data['username']:
         user_id = ObjectId(data['username'])
 
-    print(data)
+    # print(data)
 
     # send back data to test if it worked with success code (200)
     return make_response(jsonify(data), 200)
@@ -272,12 +282,88 @@ def trip_detailed(trip_id):
 #
 # stops functionality
 #
-@app.route('/stop/new/')
-# @app.route('/trip/<trip_id>/stop/new/')
-def trip_new_stop():
-    return render_template('stop_new.html')
+@app.route('/trip/<trip_id>/stop/new/', methods=['POST', 'GET'])
+def trip_new_stop(trip_id):
+
+    # check that user_id is in the correct format
+    if not ObjectId.is_valid(user_id):
+        return redirect(url_for('show_trips'))
+
+    # only proceed if a valid trip_id is specified and user is owner
+    trip_query = {'_id': ObjectId(trip_id), 'owner_id': ObjectId(user_id)}
+    trip = mongo.db.trips.find_one(trip_query)
+
+    if trip:
+        # validate that user has permission to add a new stop to this
+        # (i.e. owner_id=user_id)
+        # if not redirect back to trip detailed page
+        if request.method == 'POST':
+            try:
+                # strings
+                country = str(request.form.get('country'))
+                city = str(request.form.get('city'))
+                currency = str(request.form.get('currency'))
+
+                # numbers
+                duration = int(request.form.get('duration'))
+                cost_accommodation = float(
+                    request.form.get('cost-accommodation'))
+                cost_food = float(request.form.get('cost-food'))
+                cost_other = float(request.form.get('cost-other'))
+
+                # create new entry if validation is successful
+                newStop = {
+                    'trip_id': ObjectId(trip_id),
+                    'country': country,
+                    'city/town': city,
+                    'duration': duration,
+                    'order': 1,
+                    'currency': currency,
+                    'cost_accommodation': cost_accommodation,
+                    'cost_food': cost_food,
+                    'cost_other': cost_other
+                }
+                mongo.db.stops.insert_one(newStop)
+
+                return redirect(url_for('trip_detailed', trip_id=trip_id))
+            except Exception as e:
+                print(e)
+                return 'Input error'
+        else:
+            # need to pass through trip information from database
+
+            return render_template('stop_new.html', trip=trip)
+    else:
+        # if no trip_id then redirect to show all trips
+        return redirect(url_for('show_trips'))
 
 
+@app.route('/trip/<trip_id>/stop/<stop_id>/delete/')
+def trip_stop_delete(trip_id, stop_id):
+    # need to validate that the trip_id belongs to this user
+    # if not, redirect to show all trips
+    # if it does, process the delete
+    query = {'_id': ObjectId(trip_id), 'owner_id': ObjectId(user_id)}
+
+    # check user is the user that owns this trip
+    trip = mongo.db.trips.find_one(query)
+
+    # check if any results were returned by the query - i.e. does this user
+    # own this trip?
+    if trip:
+        # check that the stop exists within the supplied trip
+        query = {'_id': ObjectId(stop_id), 'trip_id': ObjectId(trip_id)}
+
+        # check user is the user that owns this trip
+        stop = mongo.db.stops.find_one(query)
+
+        if stop:
+            # if user owns this entry then delete
+            mongo.db.stops.delete_one(query)
+
+        return redirect(url_for('trip_detailed', trip_id=trip_id))
+    else:
+        return 'Trip does not exist or you do not have permission to do this'
 #
 # user functionality
 #
