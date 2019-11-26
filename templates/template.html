@@ -27,11 +27,11 @@
 			<a href="#" data-target="mobile-menu" class="sidenav-trigger"><i class="material-icons">menu</i></a>
 			<ul class="right hide-on-med-and-down">
 				<li><a href="{{ url_for('show_trips') }}">All Trips</a></li>
-				<li><a href="{{ url_for('show_trips') }}">My Trips</a></li>
+				<li><a href="{{ url_for('show_trips', show='user') }}">My Trips</a></li>
 				<li><a href="{{ url_for('trip_new') }}">Create Trip</a></li>
-				<li><a href="{{ url_for('user_new') }}">Register</a></li>
+				<!-- <li><a href="{{ url_for('user_new') }}">Register</a></li>
 				<li><a href="{{ url_for('user_login') }}">Login</a></li>
-				<li><a href="{{ url_for('user_logout') }}">Logout</a></li>
+				<li><a href="{{ url_for('user_logout') }}">Logout</a></li> -->
 			</ul>
 		</div>
 	</nav>
@@ -42,11 +42,11 @@
 	<!-- mobile navbar (hidden on larger devices) -->
 	<ul class="sidenav" id="mobile-menu">
 		<li><a href="{{ url_for('show_trips') }}">All Trips</a></li>
-		<li><a href="{{ url_for('show_trips') }}">My Trips</a></li>
+		<li><a href="{{ url_for('show_trips', show='user') }}">My Trips</a></li>
 		<li><a href="{{ url_for('trip_new') }}">Create Trip</a></li>
-		<li><a href="{{ url_for('user_new') }}">Register</a></li>
+		<!-- <li><a href="{{ url_for('user_new') }}">Register</a></li>
 		<li><a href="{{ url_for('user_login') }}">Login</a></li>
-		<li><a href="{{ url_for('user_logout') }}">Logout</a></li>
+		<li><a href="{{ url_for('user_logout') }}">Logout</a></li> -->
 	</ul>
 
 	<main class="container">
