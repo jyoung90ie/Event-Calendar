@@ -3,7 +3,7 @@
 {% block title %}trip detail{% endblock %}
 {% block header %}
 <a href="{{ url_for('show_trips') }}" class="breadcrumb">All Trips</a>
-<a href="{{ url_for('show_trips') }}" class="breadcrumb">My Trips</a>
+<a href="{{ url_for('show_trips', show='user') }}" class="breadcrumb">My Trips</a>
 <a href="#!" class="breadcrumb">Detailed Information for Trip: <strong>{{ trip['name'] }}</strong></a>
 {% endblock %}
 
@@ -22,7 +22,15 @@
 		<!-- clicking on this will expand the article to show all the detail -->
 		{% for stop in stops %}
 		<ul class="trip-stops">
-			<li>{{ stop['country']}} - {{stop['city/town']}} [{{ stop['duration'] }} nights]</li>
+			<li>
+				<span>{{ stop['country']}} - {{stop['city/town']}} [{{ stop['duration'] }} nights]</span>
+				{% if trip['owner_id'] == user_id %}
+				<span class="right">
+                <a href="#"><i class="small material-icons">edit</i></a>
+                <a href="{{url_for('trip_stop_delete', trip_id=trip['_id'], stop_id=stop['_id'])}}"><i class="small material-icons">delete</i></a>
+                </span>
+				{% endif %}
+			</li>
 		</ul>
 		{% endfor %}
 	</article>
@@ -36,7 +44,7 @@
 <!-- floating link to add a new trip -->
 {% if trip['owner_id'] == user_id %}
 <aside class="fixed-action-btn">
-	<a href="" class="btn my-btn my-btn-new">
+	<a href="{{ url_for('trip_new_stop', trip_id=trip['_id']) }}" class="btn my-btn my-btn-new">
 		add stop
 	</a>
 </aside>
