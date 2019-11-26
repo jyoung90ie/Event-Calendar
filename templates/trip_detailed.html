@@ -34,9 +34,11 @@
 </section>
 
 <!-- floating link to add a new trip -->
+{% if trip['owner_id'] == user_id %}
 <aside class="fixed-action-btn">
 	<a href="" class="btn my-btn my-btn-new">
 		add stop
 	</a>
 </aside>
+{% endif %}
 {% endblock %}

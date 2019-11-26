@@ -40,6 +40,10 @@ trip['end_date'].strftime("%b")
 				<div class="description">{{ trip['name'] }}</div>
 			</div>
 			<div class="trip-item">
+				<div class="title">user:</div>
+				<div class="description">{{ trip['owner_id'] }}</div>
+			</div>
+			<div class="trip-item">
 				<div class="title">country:</div>
 				<div class="description">{{ trip['country'] if trip['country'] else 'N/A - no stops added' }}</div>
 			</div>
@@ -57,9 +61,15 @@ trip['end_date'].strftime("%b")
 				<div class="description">{{ trip['total_cost'] if trip['total_cost'] else 'N/A - no stops added' }}
 				</div>
 			</div>
+			<div class="trip-item">
+				<div class="title">public?</div>
+				<div class="description">{{ 'Yes' if trip['public'] else 'No' }}
+				</div>
+			</div>
 		</article>
 	</a>
 
+	{% if trip['owner_id']|string() == user_id|string() %}
 	<footer class="trip-btns right">
 		<a href="{{ url_for('trip_update', trip_id=trip['_id']) }}" class="btn my-btn my-btn-update">
 			update
@@ -68,6 +78,7 @@ trip['end_date'].strftime("%b")
 			delete
 		</a>
 	</footer>
+	{% endif %}
 </section>
 
 {% endfor %}

@@ -1,9 +1,10 @@
-import os
-from flask import Flask, render_template, request, url_for, redirect
-from dotenv import load_dotenv
-from flask_pymongo import PyMongo
-from datetime import datetime
 from bson.objectid import ObjectId
+from datetime import datetime
+from flask_pymongo import PyMongo
+from dotenv import load_dotenv
+import os
+from flask import Flask, render_template, request, url_for, redirect, \
+    make_response, jsonify
 
 # get environment variables
 load_dotenv()
@@ -17,8 +18,9 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 mongo = PyMongo(app)
 
 # set user id
-user_id = '5dd6ad9e1c9d4400006e56e1'  # real user_id
+# user_id = '5dd6ad9e1c9d4400006e56e1'  # real user_id
 # user_id = '5dd6ad9e1c9d4400006e56e9'  # fake test user_id
+user_id = ''
 
 ##
 # setup path routing
@@ -30,17 +32,20 @@ user_id = '5dd6ad9e1c9d4400006e56e1'  # real user_id
 @app.route('/trips/')
 @app.route('/trips/all/')
 def show_trips():
+    print('show_trips(): user_id = ' + str(user_id))
     # pass through the trips collection, using .find() to return all contents
     # of collection enabling iteration
     agg = [
         {
-            "$lookup": {
-                "from": "stops",
-                "localField": "_id",
-                "foreignField": "trip_id",
-                "as": "stops"
+            "$match": {
+                "$or":
+                    [{"owner_id": user_id},
+                     {"public": True}]
             }
         },
+        {"$lookup": {"from": "stops", "localField": "_id",
+                     "foreignField": "trip_id", "as": "stops"}
+         },
         {
             "$unwind": {
                 "path": "$stops",
@@ -82,10 +87,16 @@ def show_trips():
                     "$max": "$end_date"
                 },
                 "country": {
-                    "$max": "$stops.country"
+                    "$first": "$stops.country"
                 },
                 "name": {
-                    "$max": "$name"
+                    "$first": "$name"
+                },
+                "owner_id": {
+                    "$first": "$owner_id"
+                },
+                "public": {
+                    "$min": "$public"
                 }
             }
         },
@@ -94,6 +105,8 @@ def show_trips():
                 "start_date": True,
                 "end_date": True,
                 "name": True,
+                "public": True,
+                "owner_id": True,
                 "country": True,
                 "number_of_stops": True,
                 "duration": True,
@@ -111,11 +124,14 @@ def show_trips():
             }
         }
     ]
-    for row in mongo.db.trips.aggregate(agg):
-        print(row)
+    # for row in mongo.db.trips.aggregate(agg):
+    #     print(row)
 
     # return 'Test'
-    return render_template('trips_show.html', trips=mongo.db.trips.aggregate(agg))
+
+    return render_template('trips_show.html',
+                           trips=mongo.db.trips.aggregate(agg),
+                           user_id=user_id)
 
 
 @app.route('/trip/new/', methods=['POST', 'GET'])
@@ -140,7 +156,7 @@ def trip_new():
                 'name': name,
                 'start_date': startdate,
                 'end_date': enddate,
-                'owner_id': ObjectId(user_id),
+                'owner_id': user_id,
                 'public': public
             }
             mongo.db.trips.insert_one(newTrip)
@@ -151,6 +167,21 @@ def trip_new():
             return 'Input error'
     else:
         return render_template('trip_new.html')
+
+# Set Username
+@app.route('/set/username/', methods=['POST'])
+def set_username():
+    data = request.get_json()
+
+    global user_id
+
+    if data['username']:
+        user_id = ObjectId(data['username'])
+
+    print(data)
+
+    # send back data to test if it worked with success code (200)
+    return make_response(jsonify(data), 200)
 
 
 @app.route('/trip/<trip_id>/update/', methods=['POST', 'GET'])
@@ -235,7 +266,8 @@ def trip_detailed(trip_id):
 
     return render_template('trip_detailed.html',
                            trip=mongo.db.trips.find_one(trip_query),
-                           stops=mongo.db.stops.find(stop_query))
+                           stops=mongo.db.stops.find(stop_query),
+                           user_id=user_id)
 
 #
 # stops functionality
