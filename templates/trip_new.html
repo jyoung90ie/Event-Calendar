@@ -18,20 +18,23 @@
 			<form action="" method="POST">
 				<div class="row">
 					<div class="input-field col s12">
-						<input id="trip-name" name="trip-name" type="text" class="validate">
+						<input id="trip-name" name="trip-name" type="text" class="validate" required>
 						<label for="trip-name">Name</label>
+						<span class="helper-text" data-error="Field must be populated"></span>
 					</div>
 				</div>
 				<div class="row">
 					<div class="input-field col s12">
-						<input id="start-date" name="start-date" type="text" class="datepicker">
+						<input id="start-date" name="start-date" type="text" class="datepicker readonly" required>
 						<label for="start-date">Start Date</label>
+						<span class="helper-text" data-error="Field required"></span>
 					</div>
 				</div>
 				<div class="row">
 					<div class="input-field col s12">
-						<input id="end-date" name="end-date" type="text" class="datepicker">
+						<input id="end-date" name="end-date" type="text" class="datepicker readonly" required>
 						<label for="end-date">End Date</label>
+						<span class="helper-text" data-error="Field required"></span>
 					</div>
 				</div>
 				<div class="row">
