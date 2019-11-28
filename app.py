@@ -4,7 +4,7 @@ from flask_pymongo import PyMongo
 from dotenv import load_dotenv
 import os
 from flask import Flask, render_template, request, url_for, redirect, \
-    make_response, jsonify
+    make_response, jsonify, flash
 
 # get environment variables
 load_dotenv()
@@ -134,10 +134,6 @@ def show_trips(show='all'):
             }
         }
     ]
-    # for row in mongo.db.trips.aggregate(agg):
-    #     print(row)
-
-    # return 'Test'
 
     return render_template('trips_show.html',
                            trips=mongo.db.trips.aggregate(agg),
@@ -169,9 +165,12 @@ def trip_new():
                 'owner_id': user_id,
                 'public': public
             }
-            mongo.db.trips.insert_one(newTrip)
 
-            return redirect(url_for('show_trips'))
+            trip_id = mongo.db.trips.insert(newTrip)
+
+            flash('New trip has been created - you can add stops below')
+
+            return redirect(url_for('trip_detailed', trip_id=trip_id))
         except Exception as e:
             print(e)
             return 'Input error'
@@ -187,11 +186,9 @@ def set_username():
 
     if data['username']:
         user_id = ObjectId(data['username'])
+        # send back data to test if it worked with success code (200)
 
-    # print(data)
-
-    # send back data to test if it worked with success code (200)
-    return make_response(jsonify(data), 200)
+        return make_response(jsonify(data), 200)
 
 
 @app.route('/trip/<trip_id>/update/', methods=['POST', 'GET'])
@@ -226,7 +223,8 @@ def trip_update(trip_id):
 
             mongo.db.trips.update_one(updateCriteria, updateQuery)
 
-            return redirect(url_for('show_trips'))
+            flash('Your trip has been updated')
+            return redirect(url_for('trip_detailed', trip_id=trip_id))
         except Exception as e:
             print(e)
             return 'Input error'
@@ -256,11 +254,18 @@ def trip_delete(trip_id):
         # the trip
 
         # if user owns this entry then delete
+
+        flash(
+            f'The trip and all associated stops have now been '
+            'deleted')
         mongo.db.trips.delete_one(query)
 
-        return redirect(url_for('show_trips'))
     else:
-        return 'Trip does not exist or you do not have permission to do this'
+        flash(
+            f'The trip you are trying to access does not exist or you do not '
+            'have permission to perform this action.')
+
+    return redirect(url_for('show_trips'))
 
 
 # @app.route('/trip/detailed/')
@@ -323,8 +328,9 @@ def trip_new_stop(trip_id):
                     'cost_food': cost_food,
                     'cost_other': cost_other
                 }
-                mongo.db.stops.insert_one(newStop)
+                mongo.db.stops.insert(newStop)
 
+                flash('You have added a new stop to this trip')
                 return redirect(url_for('trip_detailed', trip_id=trip_id))
             except Exception as e:
                 print(e)
@@ -335,6 +341,9 @@ def trip_new_stop(trip_id):
             return render_template('stop_new.html', trip=trip)
     else:
         # if no trip_id then redirect to show all trips
+        flash(
+            'Could not determine the Trip you were trying to access '
+            '- displaying all trips')
         return redirect(url_for('show_trips'))
 
 
@@ -360,18 +369,49 @@ def trip_stop_delete(trip_id, stop_id):
         if stop:
             # if user owns this entry then delete
             mongo.db.stops.delete_one(query)
+            flash('The stop has been removed from this trip')
+        else:
+            flash(
+                'The stop you are trying to access does not exist or you do '
+                'not have permission to perform the action')
 
         return redirect(url_for('trip_detailed', trip_id=trip_id))
     else:
-        return 'Trip does not exist or you do not have permission to do this'
+        flash(
+            f'The trip you are trying to access does not exist or you do not '
+            'have permission to perform this action.')
+        return redirect(url_for('show_trips'))
 #
 # user functionality
 #
 
 # register
-@app.route('/user/register/')
+@app.route('/user/register/', methods=['POST', 'GET'])
 def user_new():
-    return render_template('placeholder.html', run_function='Register')
+    if request.method == 'POST':
+        # create functionality to process form
+        # then add to db
+        # then redirect back to all trips
+
+        try:
+            # create new entry if validation is successful
+            # newUser = {
+            #     'username': request.form.get('username'),
+            #     'name': request.form.get('name'),
+            #     'display_name': request.form.get('display-name'),
+            #     'email': request.form.get('email'),
+            #     'password': ''
+            # }
+            # mongo.db.users.insert_one(newUser)
+
+            flash('A new account has been successfully created - you can '
+                  'now login')
+            return redirect(url_for('show_trips'))
+        except Exception as e:
+            print(e)
+            return 'Input error'
+    else:
+        return render_template('user_new.html')
 
 # login
 @app.route('/user/login/')

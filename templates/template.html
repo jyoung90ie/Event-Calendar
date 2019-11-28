@@ -29,9 +29,9 @@
 				<li><a href="{{ url_for('show_trips') }}">All Trips</a></li>
 				<li><a href="{{ url_for('show_trips', show='user') }}">My Trips</a></li>
 				<li><a href="{{ url_for('trip_new') }}">Create Trip</a></li>
-				<!-- <li><a href="{{ url_for('user_new') }}">Register</a></li>
+				<li><a href="{{ url_for('user_new') }}">Register</a></li>
 				<li><a href="{{ url_for('user_login') }}">Login</a></li>
-				<li><a href="{{ url_for('user_logout') }}">Logout</a></li> -->
+				<li><a href="{{ url_for('user_logout') }}">Logout</a></li>
 			</ul>
 		</div>
 	</nav>
@@ -44,12 +44,21 @@
 		<li><a href="{{ url_for('show_trips') }}">All Trips</a></li>
 		<li><a href="{{ url_for('show_trips', show='user') }}">My Trips</a></li>
 		<li><a href="{{ url_for('trip_new') }}">Create Trip</a></li>
-		<!-- <li><a href="{{ url_for('user_new') }}">Register</a></li>
+		<li><a href="{{ url_for('user_new') }}">Register</a></li>
 		<li><a href="{{ url_for('user_login') }}">Login</a></li>
-		<li><a href="{{ url_for('user_logout') }}">Logout</a></li> -->
+		<li><a href="{{ url_for('user_logout') }}">Logout</a></li>
 	</ul>
 
 	<main class="container">
+		{% with messages = get_flashed_messages() %}
+		{% if messages %}
+		<ul class="user-feedback">
+			{% for message in messages %}
+			<li>{{ message }}</li>
+			{% endfor %}
+		</ul>
+		{% endif %}
+		{% endwith %}
 		<nav class="breadcrumb-nav row">
 			<div class="nav-wrapper">
 				<div class="col s12">
@@ -87,6 +96,8 @@
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js">
 	</script>
 	<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+	{% block js %}{% endblock %}
 
 	<!-- initialise materialize js elements  -->
 	<script>
@@ -131,10 +142,6 @@
             sendUsername();
             location.reload();
         });
-
-
-
-		{% block js %}{% endblock %}
 	</script>
 </body>
 
