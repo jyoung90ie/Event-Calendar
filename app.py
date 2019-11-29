@@ -4,27 +4,29 @@ from flask_pymongo import PyMongo
 from dotenv import load_dotenv
 import os
 from flask import Flask, render_template, request, url_for, redirect, \
-    make_response, jsonify, flash
+    make_response, jsonify, flash, session
 
 # get environment variables
 load_dotenv()
 
 app = Flask(__name__)
-app.config['MONGO_DBNAME'] = 'travelPal'
+# app.config['MONGO_DBNAME'] = 'travelPal'
 app.config['MONGO_URI'] = os.getenv('MONGODB_URI')
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 
 # initialise mongoDb
 mongo = PyMongo(app)
 
-# set user id
-# user_id = '5dd6ad9e1c9d4400006e56e1'  # real user_id
-# user_id = '5dd6ad9e1c9d4400006e56e9'  # fake test user_id
-user_id = ''
+# set collections variables
+users = mongo.db.users
+trips = mongo.db.trips
+stops = mongo.db.stops
 
-##
-# setup path routing
-##
+
+def checkUserPermission(checkLogin=True, checkTripOwner=False,
+                        checkStopOwner=False, trip_id='', stop_id=''):
+    return True
+
 #
 # trips functionality
 #
@@ -32,9 +34,19 @@ user_id = ''
 @app.route('/trips/')
 @app.route('/trips/<show>/')
 def show_trips(show='all'):
-    print('show_trips(): user_id = ' + str(user_id))
+
+    if checkUserPermission():
+        user_id = ObjectId(session.get('USERNAME'))
+    else:
+        user_id = ''
 
     if show == 'user':
+        #  check if user logged in, if not redirect to all trips
+        if not checkUserPermission():
+            return redirect(url_for('show_trips'))
+
+        # if user is logged in, show only their trips (i.e. route is
+        # /trips/user)
         queryFilter = {
             "$match": {
                 "$or":
@@ -135,13 +147,18 @@ def show_trips(show='all'):
         }
     ]
 
-    return render_template('trips_show.html',
-                           trips=mongo.db.trips.aggregate(agg),
+    getTrips = trips.aggregate(agg)
+
+    return render_template('trips_show.html', trips=getTrips,
                            user_id=user_id, trips_showing=show)
 
 
 @app.route('/trip/new/', methods=['POST', 'GET'])
 def trip_new():
+    if not checkUserPermission():
+        flash('Please login if you wish to perform this action')
+        return redirect(url_for('show_trips'))
+
     if request.method == 'POST':
         # create functionality to process form
         # then add to db
@@ -162,113 +179,112 @@ def trip_new():
                 'name': name,
                 'start_date': startdate,
                 'end_date': enddate,
-                'owner_id': user_id,
+                'owner_id': ObjectId(session.get('USERNAME')),
                 'public': public
             }
 
-            trip_id = mongo.db.trips.insert(newTrip)
+            trip = trips.insert_one(newTrip)
 
             flash('New trip has been created - you can add stops below')
 
-            return redirect(url_for('trip_detailed', trip_id=trip_id))
+            return redirect(url_for('trip_detailed', trip_id=trip.inserted_id))
         except Exception as e:
             print(e)
             return 'Input error'
     else:
         return render_template('trip_new.html')
 
-# Set Username
-@app.route('/set/username/', methods=['POST'])
-def set_username():
-    data = request.get_json()
-
-    global user_id
-
-    if data['username']:
-        user_id = ObjectId(data['username'])
-        # send back data to test if it worked with success code (200)
-
-        return make_response(jsonify(data), 200)
-
 
 @app.route('/trip/<trip_id>/update/', methods=['POST', 'GET'])
 def trip_update(trip_id):
-    if request.method == 'POST':
-        # when the form has been clicked
-        # need validation (all fields proper, id exists, id is owned by user)
-        # then iterate through field values and update in db
-        # then redirect back to all trips
-        try:
-            # convert form date strings to datetime
-            startdate = datetime.strptime(
-                request.form.get('start-date'), '%d %b %Y')
-            enddate = datetime.strptime(
-                request.form.get('end-date'), '%d %b %Y')
-            name = str(request.form.get('trip-name'))
-            # convert checkbox 'on' or 'off' to boolean value for storing
-            public = True if request.form.get('public') == 'on' else False
+    if not checkUserPermission():
+        flash('Please login if you wish to perform this action')
+        return redirect(url_for('show_trips'))
 
-            # create new entry if validation is successful
-            updateCriteria = {
-                '_id': ObjectId(trip_id)
-            }
-            updateQuery = {
-                '$set': {
-                    'name': name,
-                    'start_date': startdate,
-                    'end_date': enddate,
-                    'public': public
+    # check that the user has permission to update this trip
+    trip = checkUserPermission(
+        checkLogin=True, checkTripOwner=True, trip_id=trip_id)
+
+    if trip:
+        if request.method == 'POST':
+            # when the form has been clicked
+            # need validation (all fields proper, id exists, id is owned by user)
+            # then iterate through field values and update in db
+            # then redirect back to all trips
+            try:
+                # convert form date strings to datetime
+                startdate = datetime.strptime(
+                    request.form.get('start-date'), '%d %b %Y')
+                enddate = datetime.strptime(
+                    request.form.get('end-date'), '%d %b %Y')
+                name = str(request.form.get('trip-name'))
+                # convert checkbox 'on' or 'off' to boolean value for storing
+                public = True if request.form.get('public') == 'on' else False
+
+                # create new entry if validation is successful
+                updateCriteria = {
+                    '_id': ObjectId(trip_id)
                 }
-            }
+                updateQuery = {
+                    '$set': {
+                        'name': name,
+                        'start_date': startdate,
+                        'end_date': enddate,
+                        'public': public
+                    }
+                }
 
-            mongo.db.trips.update_one(updateCriteria, updateQuery)
+                trips.update_one(updateCriteria, updateQuery)
 
-            flash('Your trip has been updated')
-            return redirect(url_for('trip_detailed', trip_id=trip_id))
-        except Exception as e:
-            print(e)
-            return 'Input error'
+                flash('Your trip has been updated')
+                return redirect(url_for('trip_detailed', trip_id=trip_id))
+            except Exception as e:
+                print(e)
+                return 'Input error'
+        else:
+            # create functionality to pull trip information from db
+            # then populate this data into the form
+            trip_query = {'_id': ObjectId(trip_id)}
+
+            return render_template('trip_update.html',
+                                   trip=trips.find_one(trip_query))
     else:
-        # create functionality to pull trip information from db
-        # then populate this data into the form
-        trip_query = {'_id': ObjectId(trip_id)}
-
-        return render_template('trip_update.html',
-                               trip=mongo.db.trips.find_one(trip_query),)
+        # user does not own this trip, redirect to all trips
+        return redirect(url_for('show_trips'))
 
 
 @app.route('/trip/<trip_id>/delete/')
 def trip_delete(trip_id):
-    # need to validate that the trip_id belongs to this user
-    # if not, redirect to show all trips
-    # if it does, process the delete
-    query = {'_id': ObjectId(trip_id), 'owner_id': ObjectId(user_id)}
+    if not checkUserPermission():
+        flash('Please login if you wish to perform this action')
+        return redirect(url_for('show_trips'))
 
-    # check user is the user that owns this trip
-    trip = mongo.db.trips.find_one(query)
+    # check that the user has permission to update this trip
+    trip = checkUserPermission(
+        checkLogin=True, checkTripOwner=True, trip_id=trip_id)
 
-    # check if any results were returned by the query - i.e. does this user
-    # own this trip?
     if trip:
         # add query to delete all stops associated with this trip then delete
         # the trip
 
         # if user owns this entry then delete
+        tripQuery = {"_id": ObjectId(trip_id)}
+        stopsQuery = {"trip_id": ObjectId(trip_id)}
 
         flash(
             f'The trip and all associated stops have now been '
             'deleted')
-        mongo.db.trips.delete_one(query)
+        trips.delete_one(tripQuery)
+        stops.delete_many(stopsQuery)
 
     else:
         flash(
             f'The trip you are trying to access does not exist or you do not '
             'have permission to perform this action.')
 
-    return redirect(url_for('show_trips'))
+    return redirect(url_for('show_trips', show='user'))
 
 
-# @app.route('/trip/detailed/')
 @app.route('/trip/<trip_id>/detailed/')
 def trip_detailed(trip_id):
     # check if the trip is public or private
@@ -280,23 +296,21 @@ def trip_detailed(trip_id):
     stop_query = {'trip_id': ObjectId(trip_id)}
 
     return render_template('trip_detailed.html',
-                           trip=mongo.db.trips.find_one(trip_query),
-                           stops=mongo.db.stops.find(stop_query),
-                           user_id=user_id)
+                           trip=trips.find_one(trip_query),
+                           stops=stops.find(stop_query))
 
 #
 # stops functionality
 #
 @app.route('/trip/<trip_id>/stop/new/', methods=['POST', 'GET'])
-def trip_new_stop(trip_id):
+def trip_stop_new(trip_id):
+    if not checkUserPermission():
+        flash('Please login if you wish to perform this action')
+        return redirect(url_for('trip_detailed', trip_id=trip_id))
 
-    # check that user_id is in the correct format
-    if not ObjectId.is_valid(user_id):
-        return redirect(url_for('show_trips'))
-
-    # only proceed if a valid trip_id is specified and user is owner
-    trip_query = {'_id': ObjectId(trip_id), 'owner_id': ObjectId(user_id)}
-    trip = mongo.db.trips.find_one(trip_query)
+    # check that the user has permission to add a new stop to this trip
+    trip = checkUserPermission(
+        checkLogin=True, checkTripOwner=True, trip_id=trip_id)
 
     if trip:
         # validate that user has permission to add a new stop to this
@@ -328,7 +342,7 @@ def trip_new_stop(trip_id):
                     'cost_food': cost_food,
                     'cost_other': cost_other
                 }
-                mongo.db.stops.insert(newStop)
+                stops.insert_one(newStop)
 
                 flash('You have added a new stop to this trip')
                 return redirect(url_for('trip_detailed', trip_id=trip_id))
@@ -337,81 +351,140 @@ def trip_new_stop(trip_id):
                 return 'Input error'
         else:
             # need to pass through trip information from database
-
-            return render_template('stop_new.html', trip=trip)
+            tripQuery = trips.find_one({'_id': ObjectId(trip_id)})
+            return render_template('stop_new.html', trip=tripQuery)
     else:
-        # if no trip_id then redirect to show all trips
-        flash(
-            'Could not determine the Trip you were trying to access '
-            '- displaying all trips')
+        # if no trip_id or user not logged in then redirect to show all trips
         return redirect(url_for('show_trips'))
+
+
+@app.route('/trip/<trip_id>/stop/<stop_id>/duplicate/',
+           methods=['POST', 'GET'])
+def trip_stop_duplicate(trip_id, stop_id):
+    if not checkUserPermission():
+        flash('Please login if you wish to perform this action')
+        return redirect(url_for('trip_detailed', trip_id=trip_id))
+
+    # check that the user has permission to add a new stop to this trip
+    stop = checkUserPermission(checkLogin=True, checkStopOwner=True,
+                               trip_id=trip_id, stop_id=stop_id)
+
+    if stop:
+        copyOfStop = stops.find_one({'_id': ObjectId(stop_id),
+                                     'trip_id': ObjectId(trip_id)}, {'_id': 0})
+
+        newStop = stops.insert_one(copyOfStop)
+        flash('Stop added - you can modify the details below')
+        return redirect(url_for('trip_stop_update', trip_id=trip_id, stop_id=newStop.inserted_id))
+    else:
+        flash(
+            'The stop you are trying to access does not exist or you do '
+            'not have permission to perform the action')
+
+        return redirect(url_for('trip_detailed', trip_id=trip_id))
+
+
+@app.route('/trip/<trip_id>/stop/<stop_id>/update/', methods=['POST', 'GET'])
+def trip_stop_update(trip_id, stop_id):
+    if not checkUserPermission():
+        flash('Please login if you wish to perform this action')
+        return redirect(url_for('trip_detailed', trip_id=trip_id))
+
+    stop = checkUserPermission(checkLogin=True, checkStopOwner=True,
+                               trip_id=trip_id, stop_id=stop_id)
+
+    if stop:
+        if request.method == 'POST':
+            # when the form has been clicked
+            # need validation (all fields proper, id exists, id is owned by user)
+            # then iterate through field values and update in db
+            # then redirect back to all trips
+            try:
+                # strings
+                country = str(request.form.get('country'))
+                city = str(request.form.get('city'))
+                currency = str(request.form.get('currency'))
+
+                # numbers
+                duration = int(request.form.get('duration'))
+                cost_accommodation = float(
+                    request.form.get('cost-accommodation'))
+                cost_food = float(request.form.get('cost-food'))
+                cost_other = float(request.form.get('cost-other'))
+
+                # create new entry if validation is successful
+                updateCriteria = {
+                    '_id': ObjectId(stop_id)
+                }
+                # build update query
+                updateQuery = {
+                    '$set': {
+                        'trip_id': ObjectId(trip_id),
+                        'country': country,
+                        'city/town': city,
+                        'duration': duration,
+                        'order': 1,
+                        'currency': currency,
+                        'cost_accommodation': cost_accommodation,
+                        'cost_food': cost_food,
+                        'cost_other': cost_other
+                    }
+                }
+
+                # process query
+                stops.update_one(updateCriteria, updateQuery)
+
+                flash('Your trip has been updated')
+                return redirect(url_for('trip_detailed', trip_id=trip_id))
+            except Exception as e:
+                print(e)
+                return 'Input error'
+        else:
+            # create functionality to pull trip information from db
+            # then populate this data into the form
+            trip = trips.find_one({'_id': ObjectId(trip_id)})
+            stop = stops.find_one({'_id': ObjectId(stop_id)})
+
+            return render_template('stop_update.html', trip=trip,
+                                   stop=stop)
+    else:
+        flash(
+            'The stop you are trying to access does not exist or you do '
+            'not have permission to perform the action')
+
+        return redirect(url_for('trip_detailed', trip_id=trip_id))
 
 
 @app.route('/trip/<trip_id>/stop/<stop_id>/delete/')
 def trip_stop_delete(trip_id, stop_id):
-    # need to validate that the trip_id belongs to this user
-    # if not, redirect to show all trips
-    # if it does, process the delete
-    query = {'_id': ObjectId(trip_id), 'owner_id': ObjectId(user_id)}
+    stop = checkUserPermission(checkLogin=True, checkStopOwner=True,
+                               trip_id=trip_id, stop_id=stop_id)
 
-    # check user is the user that owns this trip
-    trip = mongo.db.trips.find_one(query)
-
-    # check if any results were returned by the query - i.e. does this user
-    # own this trip?
-    if trip:
-        # check that the stop exists within the supplied trip
-        query = {'_id': ObjectId(stop_id), 'trip_id': ObjectId(trip_id)}
-
-        # check user is the user that owns this trip
-        stop = mongo.db.stops.find_one(query)
-
-        if stop:
+    if stop:
+        query = {"_id": ObjectId(stop_id), "trip_id": ObjectId(trip_id)}
+        # check that stop exists
+        if stops.find_one(query):
             # if user owns this entry then delete
-            mongo.db.stops.delete_one(query)
+            stops.delete_one(query)
             flash('The stop has been removed from this trip')
         else:
-            flash(
-                'The stop you are trying to access does not exist or you do '
-                'not have permission to perform the action')
-
-        return redirect(url_for('trip_detailed', trip_id=trip_id))
+            flash('The stop you are trying to delete does not exist')
     else:
         flash(
-            f'The trip you are trying to access does not exist or you do not '
-            'have permission to perform this action.')
-        return redirect(url_for('show_trips'))
+            'The stop you are trying to access does not exist or you do '
+            'not have permission to perform the action')
+
+    return redirect(url_for('trip_detailed', trip_id=trip_id))
+
 #
 # user functionality
 #
 
 # register
-@app.route('/user/register/', methods=['POST', 'GET'])
+@app.route('/user/register/')
 def user_new():
-    if request.method == 'POST':
-        # create functionality to process form
-        # then add to db
-        # then redirect back to all trips
+    return render_template('placeholder.html', run_function='Register')
 
-        try:
-            # create new entry if validation is successful
-            # newUser = {
-            #     'username': request.form.get('username'),
-            #     'name': request.form.get('name'),
-            #     'display_name': request.form.get('display-name'),
-            #     'email': request.form.get('email'),
-            #     'password': ''
-            # }
-            # mongo.db.users.insert_one(newUser)
-
-            flash('A new account has been successfully created - you can '
-                  'now login')
-            return redirect(url_for('show_trips'))
-        except Exception as e:
-            print(e)
-            return 'Input error'
-    else:
-        return render_template('user_new.html')
 
 # login
 @app.route('/user/login/')
@@ -425,7 +498,7 @@ def user_logout():
     return render_template('placeholder.html', run_function='Logout')
 
 
-# logout
+# profile
 @app.route('/user/profile/')
 def user_profile():
     return render_template('placeholder.html', run_function='Profile')
