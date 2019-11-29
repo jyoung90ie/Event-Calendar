@@ -1,0 +1,82 @@
+{% extends "template.html" %}
+
+{% block title %}update stop{% endblock %}
+
+{% block header %}
+<a href="{{ url_for('show_trips') }}" class="breadcrumb">My Trips</a>
+<a href="{{ url_for('trip_detailed', trip_id=trip['_id']) }}" class="breadcrumb">Trip: "{{ trip['name'] }}"</a>
+<a href="#!" class="breadcrumb">Update Stop</a>
+{% endblock %}
+
+{% block content %}
+
+<section>
+	<p class="page-description">Update Stop Details</p>
+	<div class="row">
+		<div class="col s12">
+			<form action="" method="POST">
+				<div class="row">
+					<div class="input-field col s12 l6">
+						<input id="trip-name" name="trip-name" type="text" readonly="readonly" value="{{ trip['name'] }}">
+						<label for="trip-name">Trip Name</label>
+					</div>
+					<div class="input-field col s12 m6 l3">
+						<input id="start-date" name="start-date" type="text" readonly="readonly" value="{{ trip['start_date'].strftime('%d %b %Y') }}">
+						<label for="start-date">Trip Start Date</label>
+					</div>
+					<div class="input-field col s12 m6 l3">
+						<input id="end-date" name="end-date" type="text" readonly="readonly" value="{{ trip['end_date'].strftime('%d %b %Y') }}">
+						<label for="end-date">Trip End Date</label>
+					</div>
+				</div>
+
+				<div class="row">
+					<div class="input-field col s12 m6 l4">
+						<input id="country" name="country" type="text" class="validate" value="{{ stop['country'] }}" required>
+						<label for="country">Country</label>
+						<span class="helper-text" data-error="Field must be populated"></span>
+					</div>
+					<div class="input-field col s12 m6 l4">
+						<input id="city" name="city" type="text" class="validate" value="{{ stop['city/town'] }}" required>
+						<label for="city">City/Town</label>
+						<span class="helper-text" data-error="Field must be populated"></span>
+					</div>
+					<div class="input-field col s12 m6 l4">
+						<input id="currency" name="currency" type="text" class="validate" value="{{ stop['currency'] }}" required>
+						<label for="currency">Currency</label>
+						<span class="helper-text" data-error="Field must be populated"></span>
+					</div>
+					<div class="input-field col s12 m6">
+						<input id="duration" name="duration" type="number" min="0" step="1" class="validate" value="{{ stop['duration'] }}" required>
+						<label for="duration">Duration (nights)</label>
+						<span class="helper-text" data-error="Field required and must contain whole numbers only"></span>
+					</div>
+				</div>
+
+				<div class="row">
+					<div class="input-field col s12 m4">
+						<input id="cost-accommodation" name="cost-accommodation" type="number" min="0"  step="0.01" class="validate" value="{{ stop['cost_accommodation'] }}" required>
+						<label for="cost-accommodation">Accommodation (Cost)</label>
+						<span class="helper-text" data-error="Field required and must be a number (max. 2 decimal places)"></span>
+					</div>
+					<div class="input-field col s12 m4">
+						<input id="cost-food" name="cost-food" type="number" min="0" step="0.01" class="validate" value="{{ stop['cost_food'] }}" required>
+						<label for="cost-food">Food (Cost)</label>
+						<span class="helper-text" data-error="Field required and must be a number (max. 2 decimal places)"></span>
+					</div>
+					<div class="input-field col s12 m4">
+						<input id="cost-other" name="cost-other" type="number" min="0" step="0.01" class="validate" value="{{ stop['cost_other'] }}" required>
+						<label for="cost-other">Other (Cost)</label>
+						<span class="helper-text" data-error="Field required and must be a number (max. 2 decimal places)"></span>
+					</div>
+				</div>
+
+
+				<button class="btn waves-effect waves-light" type="submit" name="action">Update
+                    <i class="material-icons right">create</i>
+                </button>
+			</form>
+		</div>
+	</div>
+</section>
+{% endblock %}
