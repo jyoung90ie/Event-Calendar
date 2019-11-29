@@ -1,6 +1,7 @@
 {% extends "template.html" %}
-
-{% block title %}all trips{% endblock %}
+{% block title %}
+{{ 'my' if trips_showing == 'user' else 'all' }} trips
+{% endblock %}
 {% block header %}
 <a href="{{ url_for('show_trips') }}" class="breadcrumb">All Trips</a>
 {% if trips_showing == 'user' %}
@@ -8,21 +9,12 @@
 {% endif %}
 {% endblock %}
 
+
 {% block content %}
-<!-- trip container -->
-
-{% if message %}
-<p>{{ message }}</p>
-{% endif %}
-
+{% set results = {} %}
 {% for trip in trips %}
-
-<!-- <section class="trip-container"> -->
-
-<!-- 
-trip['start_date'].strftime("%b")
-trip['end_date'].strftime("%b")
--->
+{# this is used to update the global results obj #}
+{% set results = results.update({'populated': True}) %}
 <section class="trip-container">
 	<a href="{{ url_for('trip_detailed', trip_id=trip['_id']) }}">
 		<header class="trip-header">
@@ -70,8 +62,7 @@ trip['end_date'].strftime("%b")
 			</div>
 		</article>
 	</a>
-
-	{% if trip['owner_id']|string() == user_id|string() %}
+	{% if trip['owner_id']|string() == session.get('USERNAME', None)|string() %}
 	<footer class="trip-btns right">
 		<a href="{{ url_for('trip_update', trip_id=trip['_id']) }}" class="btn my-btn my-btn-update">
 			update
@@ -82,13 +73,19 @@ trip['end_date'].strftime("%b")
 	</footer>
 	{% endif %}
 </section>
-
 {% endfor %}
 
-<!-- floating link to add a new trip -->
+{% if not results %}
+<p>{{ 'You do not currently have any trips' if trips_showing == 'user' else 'There are currently no trips'}}, you can
+	change this by clicking 'new trip' at the bottom of the screen</p>
+{% endif %}
+
+<!-- floating link to add a new trip - only if user logged in -->
+{% if session.get('USERNAME') %}
 <aside class="fixed-action-btn">
 	<a href="{{ url_for('trip_new') }}" class="btn my-btn my-btn-new">
 		new trip
 	</a>
 </aside>
+{% endif %}
 {% endblock %}

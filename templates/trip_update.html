@@ -4,7 +4,9 @@
 {% block header %}
 <a href="{{ url_for('show_trips') }}" class="breadcrumb">All Trips</a>
 <a href="{{ url_for('show_trips') }}" class="breadcrumb">My Trips</a>
-<a href="#!" class="breadcrumb">Update Trip: <strong>{{ trip['name'] }}</strong></a>
+<a href="{{ url_for('trip_detailed', trip_id=trip['_id']) }}" class="breadcrumb">Trip:
+	<strong>{{ trip['name'] }}</strong></a>
+<a href="#!" class="breadcrumb">Update</strong></a>
 {% endblock %}
 
 {% block content %}

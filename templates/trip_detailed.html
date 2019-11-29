@@ -3,14 +3,16 @@
 {% block title %}trip detail{% endblock %}
 {% block header %}
 <a href="{{ url_for('show_trips') }}" class="breadcrumb">All Trips</a>
+{% if trip['owner_id']|string() == session.get('USERNAME', None)|string() %}
 <a href="{{ url_for('show_trips', show='user') }}" class="breadcrumb">My Trips</a>
+{% endif %}
 <a href="#!" class="breadcrumb">Detailed Information for Trip: <strong>{{ trip['name'] }}</strong></a>
 {% endblock %}
 
 {% block content %}
 <!-- <section class="page-description">Some text</section> -->
 <header class="trip-overview center">
-	<h2>{{ trip['name'] }}</h2>
+	<h3>{{ trip['name'] }}</h3>
 	<p>{{ trip['start_date'].strftime('%d %B %Y') }} to {{ trip['end_date'].strftime('%d %B %Y') }}</p>
 </header>
 
@@ -20,33 +22,53 @@
 	<article class="trip-month">
 		<h4 class="trip-month-header">MMMM YY</h4>
 		<!-- clicking on this will expand the article to show all the detail -->
-		{% for stop in stops %}
 		<ul class="trip-stops">
-			<li>
+
+			{% for stop in stops %}
+			<li class="trip-stop">
 				<span>{{ stop['country']}} - {{stop['city/town']}} [{{ stop['duration'] }} nights]</span>
-				{% if trip['owner_id'] == user_id %}
-				<span class="right">
-                <a href="#"><i class="small material-icons">edit</i></a>
+				{% if trip['owner_id']|string() == session.get('USERNAME', None)|string() %}
+				<span class="right icons">
+                <a href="{{url_for('trip_stop_update', trip_id=trip['_id'], stop_id=stop['_id'])}}"><i class="small material-icons">edit</i></a>
+                <a href="{{url_for('trip_stop_duplicate', trip_id=trip['_id'], stop_id=stop['_id'])}}"><i class="small material-icons">content_copy</i></a>
                 <a href="{{url_for('trip_stop_delete', trip_id=trip['_id'], stop_id=stop['_id'])}}"><i class="small material-icons">delete</i></a>
                 </span>
 				{% endif %}
 			</li>
+
+			{% endfor %}
 		</ul>
-		{% endfor %}
 	</article>
 
 	{% else %}
-	<h4 class="center">This Trip does not have any Stops. You can add a Stop by clicking 'Add Stop' at the bottom of
-		this page.</h4>
+	<h4 class="center">This Trip does not have any stops.</h4>
+	{% if trip['owner_id']|string() == session.get('USERNAME', None)|string() %}
+	<p class="center">You can add a Stop by clicking 'Add Stop' at the bottom of
+		this page.</p>
+	{% endif %}
 	{% endif %}
 </section>
 
 <!-- floating link to add a new trip -->
-{% if trip['owner_id'] == user_id %}
+{% if trip['owner_id']|string() == session.get('USERNAME', None)|string() %}
 <aside class="fixed-action-btn">
-	<a href="{{ url_for('trip_new_stop', trip_id=trip['_id']) }}" class="btn my-btn my-btn-new">
+	<a href="{{ url_for('trip_stop_new', trip_id=trip['_id']) }}" class="btn my-btn my-btn-new">
 		add stop
 	</a>
 </aside>
 {% endif %}
+{% endblock %}
+
+{% block js%}
+<!-- jsDelivr :: Sortable :: Latest (https://www.jsdelivr.com/package/npm/sortablejs) -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+
+<script>
+	const el = document.querySelector('.trip-stops');
+	const sortable = Sortable.create(el, {
+        animation: 150,
+        sort: true,
+        draggable: '.trip-stop'
+    });
+</script>
 {% endblock %}
