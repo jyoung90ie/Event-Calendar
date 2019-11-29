@@ -27,26 +27,29 @@
 			<a href="#" data-target="mobile-menu" class="sidenav-trigger"><i class="material-icons">menu</i></a>
 			<ul class="right hide-on-med-and-down">
 				<li><a href="{{ url_for('show_trips') }}">All Trips</a></li>
-				<li><a href="{{ url_for('show_trips', show='user') }}">My Trips</a></li>
-				<li><a href="{{ url_for('trip_new') }}">Create Trip</a></li>
+				{% if not session.get('USERNAME') %}
 				<li><a href="{{ url_for('user_new') }}">Register</a></li>
 				<li><a href="{{ url_for('user_login') }}">Login</a></li>
+				{% else %}
+				<li><a href="{{ url_for('show_trips', show='user') }}">My Trips</a></li>
+				<li><a href="{{ url_for('trip_new') }}">Create Trip</a></li>
 				<li><a href="{{ url_for('user_logout') }}">Logout</a></li>
+				{% endif %}
 			</ul>
 		</div>
 	</nav>
 
-
-
-
 	<!-- mobile navbar (hidden on larger devices) -->
 	<ul class="sidenav" id="mobile-menu">
 		<li><a href="{{ url_for('show_trips') }}">All Trips</a></li>
-		<li><a href="{{ url_for('show_trips', show='user') }}">My Trips</a></li>
-		<li><a href="{{ url_for('trip_new') }}">Create Trip</a></li>
+		{% if not session.get('USERNAME') %}
 		<li><a href="{{ url_for('user_new') }}">Register</a></li>
 		<li><a href="{{ url_for('user_login') }}">Login</a></li>
+		{% else %}
+		<li><a href="{{ url_for('show_trips', show='user') }}">My Trips</a></li>
+		<li><a href="{{ url_for('trip_new') }}">Create Trip</a></li>
 		<li><a href="{{ url_for('user_logout') }}">Logout</a></li>
+		{% endif %}
 	</ul>
 
 	<main class="container">
@@ -67,21 +70,6 @@
 			</div>
 		</nav>
 
-		<div class="row user-select">
-			<div class="col s3 m2 user-text">
-				User:
-			</div>
-			<div class="col s9 m10">
-				<select id="user">
-                        <option value="" disabled selected>Select User</option>
-                        <option value="5dd6ad9e1c9d4400006e56e1">John</option>
-                        <option value="5ddd15981c9d4400009dcefe">Bob</option>
-                    </select>
-			</div>
-
-		</div>
-
-		<!-- <div class="page-header center"></div> -->
 		<div class="row">
 			<div class="col s12">
 				{% block content %}{% endblock %}
@@ -121,27 +109,9 @@
         $(document).ready(function () {
             $('.sidenav').sidenav();
             $('.datepicker').datepicker(datepickerOptions);
-
-            /* retrieve username */
-            if (sessionStorage.getItem('user')) {
-                user.value = sessionStorage.getItem('user');
-            }
-
             $('select').formSelect();
-            // send username when page loads
-            sendUsername();
         });
 
-        let user = document.querySelector('#user');
-
-        /* each time the user is changed, store new value locally */
-        $('#user').change(function () {
-            sessionStorage.setItem('user', user.value);
-
-            // call function to send username to Flask via fetch()
-            sendUsername();
-            location.reload();
-        });
 	</script>
 </body>
 
