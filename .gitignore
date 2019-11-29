@@ -1,0 +1,9 @@
+.theia/
+.gitpod*
+init_tasks.sh
+.env
+__pycache__/
+templates/originals/
+test_mongodb.py
+forms.py
+.vscode/

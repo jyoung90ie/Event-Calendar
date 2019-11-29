@@ -1,0 +1,91 @@
+{% extends "template.html" %}
+{% block title %}
+{{ 'my' if trips_showing == 'user' else 'all' }} trips
+{% endblock %}
+{% block header %}
+<a href="{{ url_for('show_trips') }}" class="breadcrumb">All Trips</a>
+{% if trips_showing == 'user' %}
+<a href="{{ url_for('show_trips', show='user') }}" class="breadcrumb">My Trips</a>
+{% endif %}
+{% endblock %}
+
+
+{% block content %}
+{% set results = {} %}
+{% for trip in trips %}
+{# this is used to update the global results obj #}
+{% set results = results.update({'populated': True}) %}
+<section class="trip-container">
+	<a href="{{ url_for('trip_detailed', trip_id=trip['_id']) }}">
+		<header class="trip-header">
+			<div class="from-date">
+				<div class="big-date">{{ trip['start_date'].day }}</div>
+				<div class="small-date">{{ trip['start_date'].strftime('%b') }} {{ trip['start_date'].year }}</div>
+			</div>
+			<div class="trip-header-to">to</div>
+			<div class="to-date">
+				<div class="big-date">{{ trip['end_date'].day }}</div>
+				<div class="small-date">{{ trip['end_date'].strftime('%b') }} {{ trip['end_date'].year }}</div>
+			</div>
+		</header>
+		<article class="trip-body">
+			<div class="trip-item">
+				<div class="title">trip name:</div>
+				<div class="description">{{ trip['name'] }}</div>
+			</div>
+			<div class="trip-item">
+				<div class="title">user:</div>
+				<div class="description">{{ trip['owner_id'] }}</div>
+			</div>
+			<div class="trip-item">
+				<div class="title">country:</div>
+				<div class="description">{{ trip['country'] if trip['country'] else 'N/A - no stops added' }}</div>
+			</div>
+			<div class="trip-item">
+				<div class="title">duration (nights):</div>
+				<div class="description">{{ trip['duration'] if trip['duration'] else 'N/A - no stops added' }}</div>
+			</div>
+			<div class="trip-item">
+				<div class="title">number of stops:</div>
+				<div class="description">
+					{{ trip['number_of_stops'] if trip['number_of_stops'] else 'N/A - no stops added' }}</div>
+			</div>
+			<div class="trip-item">
+				<div class="title">cost:</div>
+				<div class="description">{{ trip['total_cost'] if trip['total_cost'] else 'N/A - no stops added' }}
+				</div>
+			</div>
+			<div class="trip-item">
+				<div class="title">public?</div>
+				<div class="description">{{ 'Yes' if trip['public'] else 'No' }}
+				</div>
+			</div>
+		</article>
+	</a>
+	{% if trip['owner_id']|string() == session.get('USERNAME', None)|string() %}
+	<footer class="trip-btns right">
+		<a href="{{ url_for('trip_update', trip_id=trip['_id']) }}" class="btn my-btn my-btn-update">
+			update
+		</a>
+		<a href="{{ url_for('trip_delete', trip_id=trip['_id']) }}" class="btn my-btn my-btn-delete">
+			delete
+		</a>
+	</footer>
+	{% endif %}
+</section>
+{% endfor %}
+
+{% if not results %}
+<p>{{ 'You do not currently have any trips' if trips_showing == 'user' else 'There are currently no trips'}}, you can
+	change this by clicking 'new trip' at the bottom of the screen</p>
+{% endif %}
+
+<!-- floating link to add a new trip - only if user logged in -->
+{% if session.get('USERNAME') %}
+<aside class="fixed-action-btn">
+	<a href="{{ url_for('trip_new') }}" class="btn my-btn my-btn-new">
+		new trip
+	</a>
+</aside>
+{% endif %}
+{% endblock %}
