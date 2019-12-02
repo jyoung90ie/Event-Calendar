@@ -25,6 +25,62 @@ stops = mongo.db.stops
 
 def checkUserPermission(checkLogin=True, checkTripOwner=False,
                         checkStopOwner=False, trip_id='', stop_id=''):
+    # check to see if the user is logged in
+    if not session.get('USERNAME'):
+        return False
+
+    # check that the variables needed to perform the db checks have been
+    # passed through
+    if checkTripOwner and trip_id == '':
+        print('checkUserPermission(): Trip ID is required')
+        return False
+
+    if checkStopOwner and (trip_id == '' or stop_id == ''):
+        print('checkUserPermission(): Trip ID and Stop ID are both required')
+        return False
+
+    # if checkTripOwner is True, OR, checkStopOwner is True - need to check
+    # that User owns the Trip
+    if checkTripOwner or checkStopOwner:
+        query = {'_id': ObjectId(trip_id),
+                 'owner_id': ObjectId(session.get('USERNAME'))}
+
+        # check user is the user that owns this trip
+        trip = trips.find_one(query)
+
+        # check if any results were returned by the query - i.e. does this user
+        # own this trip?
+        if not trip:
+            # user does not own the trip
+            print(
+                'checkUserPermission(checkTripOwner): User does not own this'
+                ' Trip - permission denied.')
+            flash(
+                f'The page you are trying to access does not exist or you do'
+                ' not have permission.')
+            return False
+
+    if checkStopOwner:
+        query = {'_id': ObjectId(stop_id), 'trip_id': ObjectId(trip_id)}
+
+        # check that the Stop is part of the Trip and by association the User
+        # owns this Stop
+        stop = stops.find_one(query)
+
+        # does the stop belong to the trip?
+        if not stop:
+            # stop is not part of trip
+            print('checkUserPermission(checkStopOwner): Stop does not belong'
+                  ' to Trip - permission denied.')
+            flash('The page you are trying to access does not exist or you do'
+                  ' not have permission.')
+
+            return False
+
+    # User is Logged In
+    # PASSTHROUGH VARIABLE DEPENDENT
+    # User owns Trip
+    # Stop belongs to Trip - and User owns Trip
     return True
 
 #
@@ -481,26 +537,95 @@ def trip_stop_delete(trip_id, stop_id):
 #
 
 # register
-@app.route('/user/register/')
+@app.route('/user/register/', methods=['POST', 'GET'])
 def user_new():
-    return render_template('placeholder.html', run_function='Register')
+    if checkUserPermission(checkLogin=True):
+        # if the user is already logged in then redirect them
+        return redirect(url_for('show_trips'))
 
+    if request.method == 'POST':
+        # create functionality to process form
+        # then add to db
+        # then redirect back to all trips
+
+        try:
+            formUsername = request.form.get('username')
+
+            user = users.find_one({"username": formUsername})
+
+            # check to see if username already exists
+            if user:
+                flash(
+                    'Error: this user already exists, please select a different username')
+                return redirect(url_for('user_new'))
+            else:
+
+                # create new entry if validation is successful
+                newUser = {
+                    'username': request.form.get('username'),
+                    'name': request.form.get('name'),
+                    'display_name': request.form.get('display-name'),
+                    'email': request.form.get('email'),
+                    'password': ''
+                }
+                users.insert_one(newUser)
+
+                flash('A new account has been successfully created - you can '
+                      'now login')
+                return redirect(url_for('show_trips'))
+        except Exception as e:
+            print(e)
+            return 'Input error'
+    else:
+        return render_template('user_register.html')
 
 # login
-@app.route('/user/login/')
+@app.route('/user/login/', methods=['POST', 'GET'])
 def user_login():
-    return render_template('placeholder.html', run_function='Login')
+    if checkUserPermission():
+        # if user already logged in then redirect away from login page
+        return redirect(url_for('show_trips'))
+
+    if request.method == 'POST':
+        # check that the username exists in the database
+        user = users.find_one(
+            {"username": request.form.get('username')})
+
+        if user:
+            flash('You are now logged in to your account')
+            # save mongodb user _id as session to indicate logged in
+            # convert ObjectId to string
+            session['USERNAME'] = str(user['_id'])
+
+            # return user to 'My Trips' page
+            return redirect(url_for('show_trips', show='user'))
+        else:
+            flash('No user exists with this username - please try again')
+            return redirect(url_for('user_login'))
+    else:
+        return render_template('user_login.html')
 
 
 # logout
 @app.route('/user/logout/')
 def user_logout():
-    return render_template('placeholder.html', run_function='Logout')
+    if not checkUserPermission():
+        # user is not logged in
+        return redirect(url_for('show_trips'))
+
+    # delete session variable
+    session.pop('USERNAME', None)
+    flash('You have been logged out')
+    return redirect(url_for('show_trips'))
 
 
 # profile
 @app.route('/user/profile/')
 def user_profile():
+    if not checkUserPermission():
+        # user is not logged in
+        return redirect(url_for('show_trips'))
+
     return render_template('placeholder.html', run_function='Profile')
 
 
