@@ -22,21 +22,26 @@ body, .trip-overview {
     color: #041748;
 }
 
-.breadcrumb-nav .nav-wrapper {
-    background-color: inherit;
-}
-.breadcrumb-nav .nav-wrapper a {
-    color: #041748;
-}
-.breadcrumb-nav .nav-wrapper {
+.breadcrumb {
+    color: #000;
     background-color: none;
 }
+
+.breadcrumb:before {
+    color: #F57F17;
+}
+
+.breadcrumb:last-child {
+    color: #041748;
+}
+
 
 nav.breadcrumb-nav {
     box-shadow: none;
     line-height: 20px;
     height: 20px;
 }
+
 
 .user-text {
     color: #000;
@@ -72,15 +77,6 @@ nav.breadcrumb-nav {
     transform: rotate(-50deg);
 }
 
-.page-header {
-    /* margin: auto;
-    width: 400px;
-    text-align: center; */
-    color: #000;
-    font-size: 2.5em;
-}
-
-
 .my-left {
     float: left;
 }
@@ -93,9 +89,6 @@ nav {
     margin-bottom: 20px;
 }
 
-.container {
-    /* background-color: teal; */
-}
 
 /* button styling */
 
@@ -135,10 +128,6 @@ nav {
     general styles
  ***/
 
-.page-description {
-
-}
-
 
 /***
     styling for trip overview page
@@ -157,6 +146,10 @@ nav {
 .trip-container a {
   color: inherit;
   text-decoration: none;
+}
+
+.icons a {
+    font-size: 8px;
 }
 
 .trip-header {
