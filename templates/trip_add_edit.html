@@ -27,23 +27,25 @@
 		<div class="col s12">
 			<form action="" method="POST">
 				<div class="row">
-					<div class="input-field col s12">
+					<div class="input-field col s12 m8">
 						<input id="trip-name" name="trip-name" type="text" class="validate"
                             value="{{ trip['name'] if action == 'update' else '' }}" required>
 						<label for="trip-name">Name</label>
 						<span class="helper-text" data-error="Field must be populated"></span>
 					</div>
-				</div>
-				<div class="row">
-					<div class="input-field col s12">
+					<div class="input-field col s12 m4">
+						<input id="travelers" name="travelers" type="number" min="1" step="1" class="validate"
+                            value="{{ trip['travelers'] if action == 'update' else '' }}" required>
+						<label for="travelers">Number of Travelers</label>
+						<span class="helper-text" data-error="Field required and must be greater than 0"></span>
+					</div>
+					<div class="input-field col s12 m6">
 						<input id="start-date" name="start-date" type="text" class="datepicker readonly"
                             value="{{ trip['start_date'].strftime('%d %b %Y') if action == 'update' else '' }}" required>
 						<label for="start-date">Start Date</label>
 						<span class="helper-text" data-error="Field required"></span>
 					</div>
-				</div>
-				<div class="row">
-					<div class="input-field col s12">
+					<div class="input-field col s12 m6">
 						<input id="end-date" name="end-date" type="text" class="datepicker readonly"
                             value="{{ trip['end_date'].strftime('%d %b %Y') if action == 'update' else '' }}" required>
 						<label for="end-date">End Date</label>

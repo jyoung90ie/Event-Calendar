@@ -34,8 +34,8 @@
 				<div class="description">{{ trip['name'] }}</div>
 			</div>
 			<div class="trip-item">
-				<div class="title">user:</div>
-				<div class="description">{{ trip['owner_id'] }}</div>
+				<div class="title">number of travelers:</div>
+				<div class="description">{{ trip['travelers'] }}</div>
 			</div>
 			<div class="trip-item">
 				<div class="title">country:</div>
@@ -51,14 +51,14 @@
 					{{ trip['number_of_stops'] if trip['number_of_stops'] else 'N/A - no stops added' }}</div>
 			</div>
 			<div class="trip-item">
-				<div class="title">cost:</div>
-				<div class="description">{{ trip['total_cost'] if trip['total_cost'] else 'N/A - no stops added' }}
+				<div class="title">total cost:</div>
+				<div class="description">
+					{{ trip['total_cost'] if trip['total_cost'] else 'N/A - no stops added' }}
 				</div>
 			</div>
 			<div class="trip-item">
-				<div class="title">public?</div>
-				<div class="description">{{ 'Yes' if trip['public'] else 'No' }}
-				</div>
+				<div class="title">creator:</div>
+				<div class="description">{{ trip['display_name'][0] }}</div>
 			</div>
 		</article>
 	</a>

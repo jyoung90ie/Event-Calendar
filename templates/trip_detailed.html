@@ -29,9 +29,9 @@
 				<span>{{ stop['country']}} - {{stop['city/town']}} [{{ stop['duration'] }} nights]</span>
 				{% if trip['owner_id']|string() == session.get('USERNAME', None)|string() %}
 				<span class="right icons">
-                <a href="{{url_for('trip_stop_update', trip_id=trip['_id'], stop_id=stop['_id'])}}"><i class="small material-icons">edit</i></a>
-                <a href="{{url_for('trip_stop_duplicate', trip_id=trip['_id'], stop_id=stop['_id'])}}"><i class="small material-icons">content_copy</i></a>
-                <a href="{{url_for('trip_stop_delete', trip_id=trip['_id'], stop_id=stop['_id'])}}"><i class="small material-icons">delete</i></a>
+                <a href="{{url_for('trip_stop_update', trip_id=trip['_id'], stop_id=stop['_id'])}}"><i class="small material-icons" title="Update">edit</i></a>
+                <a href="{{url_for('trip_stop_duplicate', trip_id=trip['_id'], stop_id=stop['_id'])}}"><i class="small material-icons" title="Duplicate">content_copy</i></a>
+                <a href="{{url_for('trip_stop_delete', trip_id=trip['_id'], stop_id=stop['_id'])}}"><i class="small material-icons" title="Delete">delete</i></a>
                 </span>
 				{% endif %}
 			</li>

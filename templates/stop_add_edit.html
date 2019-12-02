@@ -51,7 +51,8 @@
 						<span class="helper-text" data-error="Field required and must contain whole numbers only"></span>
 					</div>
 				</div>
-
+				<p>Costs inputted below are per traveler (person), per night, they are <strong>not</strong> total
+					cost</p>
 				<div class="row">
 					<div class="input-field col s12 m4">
 						<input id="cost-accommodation" name="cost-accommodation" type="number" min="0"  step="0.01" class="validate" value="{{ stop['cost_accommodation'] if action == 'update' else '' }}" required>
