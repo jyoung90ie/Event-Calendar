@@ -56,7 +56,7 @@ def checkUserPermission(checkLogin=True, checkTripOwner=False,
                 'checkUserPermission(checkTripOwner): User does not own this'
                 ' Trip - permission denied.')
             flash(
-                f'The page you are trying to access does not exist or you do'
+                'The page you are trying to access does not exist or you do'
                 ' not have permission.')
             return False
 
@@ -124,6 +124,9 @@ def show_trips(show='all'):
         {"$lookup": {"from": "stops", "localField": "_id",
                      "foreignField": "trip_id", "as": "stops"}
          },
+        {"$lookup": {"from": "users", "localField": "owner_id",
+                     "foreignField": "_id", "as": "users"}
+         },
         {
             "$unwind": {
                 "path": "$stops",
@@ -170,11 +173,17 @@ def show_trips(show='all'):
                 "name": {
                     "$first": "$name"
                 },
+                "travelers": {
+                    "$max": "$travelers"
+                },
                 "owner_id": {
                     "$first": "$owner_id"
                 },
                 "public": {
                     "$min": "$public"
+                },
+                "display_name": {
+                    "$first": "$users.display_name"
                 }
             }
         },
@@ -182,7 +191,9 @@ def show_trips(show='all'):
             "$project": {
                 "start_date": True,
                 "end_date": True,
+                "display_name": True,
                 "name": True,
+                "travelers": True,
                 "public": True,
                 "owner_id": True,
                 "country": True,
@@ -191,8 +202,10 @@ def show_trips(show='all'):
                 "total_accommodation": True,
                 "total_food": True,
                 "total_other": True,
-                "total_cost": {"$add": ["$total_accommodation", "$total_food",
-                                        "$total_other"]}
+                "total_cost": {"$multiply":
+                               ["$travelers",
+                                {"$add": ["$total_accommodation", "$total_food",
+                                          "$total_other"]}]}
             }
         },
         {
@@ -221,18 +234,21 @@ def trip_new():
         # then redirect back to all trips
 
         try:
+            name = str(request.form.get('trip-name'))
+            travelers = int(request.form.get('travelers'))
             # convert form date strings to datetime
             startdate = datetime.strptime(
                 request.form.get('start-date'), '%d %b %Y')
             enddate = datetime.strptime(
                 request.form.get('end-date'), '%d %b %Y')
-            name = str(request.form.get('trip-name'))
+
             # convert checkbox 'on' or 'off' to boolean value for storing
             public = True if request.form.get('public') == 'on' else False
 
             # create new entry if validation is successful
             newTrip = {
                 'name': name,
+                'travelers': travelers,
                 'start_date': startdate,
                 'end_date': enddate,
                 'owner_id': ObjectId(session.get('USERNAME')),
@@ -248,7 +264,7 @@ def trip_new():
             print(e)
             return 'Input error'
     else:
-        return render_template('trip_new.html')
+        return render_template('trip_add_edit.html', action='new')
 
 
 @app.route('/trip/<trip_id>/update/', methods=['POST', 'GET'])
@@ -268,12 +284,14 @@ def trip_update(trip_id):
             # then iterate through field values and update in db
             # then redirect back to all trips
             try:
+                name = str(request.form.get('trip-name'))
+                travelers = int(request.form.get('travelers'))
+
                 # convert form date strings to datetime
                 startdate = datetime.strptime(
                     request.form.get('start-date'), '%d %b %Y')
                 enddate = datetime.strptime(
                     request.form.get('end-date'), '%d %b %Y')
-                name = str(request.form.get('trip-name'))
                 # convert checkbox 'on' or 'off' to boolean value for storing
                 public = True if request.form.get('public') == 'on' else False
 
@@ -284,6 +302,7 @@ def trip_update(trip_id):
                 updateQuery = {
                     '$set': {
                         'name': name,
+                        'travelers': travelers,
                         'start_date': startdate,
                         'end_date': enddate,
                         'public': public
@@ -302,8 +321,9 @@ def trip_update(trip_id):
             # then populate this data into the form
             trip_query = {'_id': ObjectId(trip_id)}
 
-            return render_template('trip_update.html',
+            return render_template('trip_add_edit.html', action='update',
                                    trip=trips.find_one(trip_query))
+
     else:
         # user does not own this trip, redirect to all trips
         return redirect(url_for('show_trips'))
@@ -408,7 +428,7 @@ def trip_stop_new(trip_id):
         else:
             # need to pass through trip information from database
             tripQuery = trips.find_one({'_id': ObjectId(trip_id)})
-            return render_template('stop_new.html', trip=tripQuery)
+            return render_template('stop_add_edit.html', trip=tripQuery, action='new')
     else:
         # if no trip_id or user not logged in then redirect to show all trips
         return redirect(url_for('show_trips'))
@@ -501,8 +521,8 @@ def trip_stop_update(trip_id, stop_id):
             trip = trips.find_one({'_id': ObjectId(trip_id)})
             stop = stops.find_one({'_id': ObjectId(stop_id)})
 
-            return render_template('stop_update.html', trip=trip,
-                                   stop=stop)
+            return render_template('stop_add_edit.html', trip=trip,
+                                   stop=stop, action='update')
     else:
         flash(
             'The stop you are trying to access does not exist or you do '
