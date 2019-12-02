@@ -248,7 +248,7 @@ def trip_new():
             print(e)
             return 'Input error'
     else:
-        return render_template('trip_new.html')
+        return render_template('trip_add_edit.html', action='new')
 
 
 @app.route('/trip/<trip_id>/update/', methods=['POST', 'GET'])
@@ -302,8 +302,9 @@ def trip_update(trip_id):
             # then populate this data into the form
             trip_query = {'_id': ObjectId(trip_id)}
 
-            return render_template('trip_update.html',
+            return render_template('trip_add_edit.html', action='update',
                                    trip=trips.find_one(trip_query))
+
     else:
         # user does not own this trip, redirect to all trips
         return redirect(url_for('show_trips'))
@@ -408,7 +409,7 @@ def trip_stop_new(trip_id):
         else:
             # need to pass through trip information from database
             tripQuery = trips.find_one({'_id': ObjectId(trip_id)})
-            return render_template('stop_new.html', trip=tripQuery)
+            return render_template('stop_add_edit.html', trip=tripQuery, action='new')
     else:
         # if no trip_id or user not logged in then redirect to show all trips
         return redirect(url_for('show_trips'))
@@ -501,8 +502,8 @@ def trip_stop_update(trip_id, stop_id):
             trip = trips.find_one({'_id': ObjectId(trip_id)})
             stop = stops.find_one({'_id': ObjectId(stop_id)})
 
-            return render_template('stop_update.html', trip=trip,
-                                   stop=stop)
+            return render_template('stop_add_edit.html', trip=trip,
+                                   stop=stop, action='update')
     else:
         flash(
             'The stop you are trying to access does not exist or you do '
