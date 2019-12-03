@@ -11,56 +11,164 @@
 
 {% block content %}
 <!-- <section class="page-description">Some text</section> -->
-<header class="trip-overview center">
-	<h3>{{ trip['name'] }}</h3>
-	<p>{{ trip['start_date'].strftime('%d %B %Y') }} to {{ trip['end_date'].strftime('%d %B %Y') }}</p>
-</header>
+<div class="row">
+	<!-- <header class="trip-overview col s12 m4"> -->
+	<!-- <h3>{{ trip['name'] }}</h3> -->
+	<header class="section col s12 l4">
+		<h4 class="trip-month-header">Overview</h4>
+		<div class="row">
+			<div class="col s6">Start Date:</div>
+			<div class="col s6">{{ trip['start_date'].strftime('%d %B %Y') }}</div>
+			<div class="col s6">End Date:</div>
+			<div class="col s6">{{ trip['end_date'].strftime('%d %B %Y') }}</div>
+			<div class="col s6">Duration:</div>
+			<div class="col s6">_duration_</div>
+			<div class="col s6">Avg Cost (pp/night):</div>
+			<div class="col s6">avg_cost</div>
+			<div class="col s6">Total Stops:</div>
+			<div class="col s6">no_of_stops</div>
+			<div class="col s6">Total Countries:</div>
+			<div class="col s6">no_of_countries</div>
+		</div>
 
-<section class="trip-breakdown">
-	{% if stops.count() %}
+		<div class="row center">
+			<div class="col s12">
+				<table class="responsive-table centered highlight">
+					<thead>
+						<tr>
+							<th>Costs</th>
+							<th>Accommodation</th>
+							<th>Food</th>
+							<th>Other</th>
+						</tr>
+					</thead>
 
-	<article class="trip-month">
-		<h4 class="trip-month-header">MMMM YY</h4>
-		<!-- clicking on this will expand the article to show all the detail -->
-		<ul class="trip-stops">
+					<tbody>
+						<tr>
+							<th>Per Person</th>
+							<td>Value 1</td>
+							<td>Value 2</td>
+							<td>Value 3</td>
+						</tr>
+						<tr>
+							<th>Total</th>
+							<td>Value 1</td>
+							<td>Value 2</td>
+							<td>Value 3</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+		<!-- </div> -->
+	</header>
 
-			{% for stop in stops %}
-			<li class="trip-stop">
-				<span>{{ stop['country']}} - {{stop['city/town']}} [{{ stop['duration'] }} nights]</span>
-				{% if trip['owner_id']|string() == session.get('USERNAME', None)|string() %}
-				<span class="right icons">
-                <a href="{{url_for('trip_stop_update', trip_id=trip['_id'], stop_id=stop['_id'])}}"><i class="small material-icons" title="Update">edit</i></a>
-                <a href="{{url_for('trip_stop_duplicate', trip_id=trip['_id'], stop_id=stop['_id'])}}"><i class="small material-icons" title="Duplicate">content_copy</i></a>
-                <a href="{{url_for('trip_stop_delete', trip_id=trip['_id'], stop_id=stop['_id'])}}"><i class="small material-icons" title="Delete">delete</i></a>
-                </span>
-				{% endif %}
-			</li>
+	<section class="trip-breakdown">
+		<div class="section col s12 l6 offset-l1">
+			<h4 class="trip-month-header">Trip Stops</h4>
+			{%- if stops.count() -%}
+			<article class="trip-month ">
+				<!-- <h4 class="trip-month-header">MMMM YY</h4> -->
+				<!-- clicking on this will expand the article to show all the detail -->
+				<ul class="collapsible">
+					{%- for stop in stops -%}
+					<li>
+						<div class="collapsible-header">{{ stop['country']}} - {{stop['city/town']}}
+							[{{ stop['duration'] -}}
+							nights]</span>
+							{%- if trip['owner_id']|string() == session.get('USERNAME', None)|string() -%}
+							<span class="right icons">
+                        <a href="{{url_for('trip_stop_update', trip_id=trip['_id'], stop_id=stop['_id'])}}">
+                            <i class="small material-icons" title="Update">edit</i>
+                        </a>
+                        <a href="{{url_for('trip_stop_duplicate', trip_id=trip['_id'], stop_id=stop['_id'])}}">
+                            <i class="small material-icons" title="Duplicate">content_copy</i>
+                        </a>
+                        <a href="{{url_for('trip_stop_delete', trip_id=trip['_id'], stop_id=stop['_id'])}}">
+                            <i class="small material-icons" title="Delete">delete</i>
+                        </a>
+                    </span>
+							{%- endif -%}
+						</div>
+						<div class="collapsible-body">
+							<div class="row">
+								<div class="col s6"><strong>Start Date:</strong></div>
+								<div class="col s6">_start_date_</div>
+								<div class="col s6"><strong>End Date:</strong></div>
+								<div class="col s6">_end_date_</div>
+								<div class="col s6"><strong>Duration:</strong></div>
+								<div class="col s6">{{ stop['duration'] }}</div>
+								<div class="col s6"><strong>Currency:</strong></div>
+								<div class="col s6">{{ stop['currency'] }}</div>
+								<div class="col s12">
+									<table class="highlight responsive-table">
+										<thead>
+											<tr>
+												<th>Costs</th>
+												<th>Accommodation</th>
+												<th>Food</th>
+												<th>Other</th>
+											</tr>
+										</thead>
+										<tbody>
+											<tr>
+												<th>Total (per person/night)</th>
+												<td>{{ stop['cost_accommodation'] }}</td>
+												<td>{{ stop['cost_food'] }}</td>
+												<td>{{ stop['cost_other'] }}</td>
+											</tr>
+											<tr>
+												<th>Total (per person)</th>
+												<td>{{ stop['cost_accommodation'] }}</td>
+												<td>{{ stop['cost_food'] }}</td>
+												<td>{{ stop['cost_other'] }}</td>
+											</tr>
+											<tr>
+												<th>Total</th>
+												<td>{{ stop['cost_accommodation'] }}</td>
+												<td>{{ stop['cost_food'] }}</td>
+												<td>{{ stop['cost_other'] }}</td>
+											</tr>
+										</tbody>
+									</table>
+								</div>
 
-			{% endfor %}
-		</ul>
-	</article>
+							</div>
+						</div>
+					</li>
+					{%- endfor -%}
+				</ul>
+			</article>
 
-	{% else %}
-	<h4 class="center">This Trip does not have any stops.</h4>
-	{% if trip['owner_id']|string() == session.get('USERNAME', None)|string() %}
-	<p class="center">You can add a Stop by clicking 'Add Stop' at the bottom of
-		this page.</p>
-	{% endif %}
-	{% endif %}
-</section>
-
+			{%- else -%}
+			<h4 class="center">This Trip does not have any stops.</h4>
+			{%- if trip['owner_id']|string() == session.get('USERNAME', None)|string() -%}
+			<p class="center">You can add a Stop by clicking 'Add Stop' at the bottom of
+				this page.</p>
+			{%- endif -%}
+			{%- endif -%}
+		</div>
+	</section>
+</div>
 <!-- floating link to add a new trip -->
-{% if trip['owner_id']|string() == session.get('USERNAME', None)|string() %}
+{%- if trip['owner_id']|string() == session.get('USERNAME', None)|string() -%}
 <aside class="fixed-action-btn">
-	<a href="{{ url_for('trip_stop_new', trip_id=trip['_id']) }}" class="btn my-btn my-btn-new">
+	<a href="{{ url_for('trip_update', trip_id=trip['_id']) }}" class="btn-small my-btn-update">
+		update
+	</a>
+	<a href="{{ url_for('trip_delete', trip_id=trip['_id']) }}" class="btn-small my-btn-delete">
+		delete
+	</a>
+	<a href="{{ url_for('trip_stop_new', trip_id=trip['_id']) }}" class="btn-small my-btn-new">
 		add stop
 	</a>
 </aside>
-{% endif %}
-{% endblock %}
+{%- endif -%}
+{%- endblock -%}
 
-{% block js%}
+{%- block js -%}
 <!-- jsDelivr :: Sortable :: Latest (https://www.jsdelivr.com/package/npm/sortablejs) -->
+<!--
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 
 <script>
@@ -71,4 +179,8 @@
         draggable: '.trip-stop'
     });
 </script>
-{% endblock %}
+-->
+<script>
+	$('.collapsible').collapsible();
+</script>
+{%- endblock -%}
