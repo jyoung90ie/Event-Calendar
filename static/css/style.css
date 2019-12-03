@@ -1,17 +1,7 @@
-@import url('https://fonts.googleapis.com/css?family=Calistoga|Gloria+Hallelujah|Special+Elite&display=swap');
+@import url('https://fonts.googleapis.com/css?family=Gloria+Hallelujah&display=swap');
 
 h1 {
     font-family: 'Gloria Hallelujah', cursive;
-}
-
-h3, h4, .btn, .trip-header, .breadcrumb-nav {
-    font-family: 'Calistoga', cursive;
-
-/* } */
-}
-
-body, .trip-overview {
-    font-family: 'Special Elite', cursive;
 }
 
 .nav-wrapper {
@@ -20,6 +10,10 @@ body, .trip-overview {
 
 .nav-wrapper a, .nav-wrapper span {
     color: #041748;
+}
+
+.welcome {
+    margin: 0 20px;
 }
 
 .breadcrumb {
@@ -35,13 +29,11 @@ body, .trip-overview {
     color: #041748;
 }
 
-
 nav.breadcrumb-nav {
     box-shadow: none;
     line-height: 20px;
     height: 20px;
 }
-
 
 .user-text {
     color: #000;
@@ -75,14 +67,6 @@ nav.breadcrumb-nav {
 .logo i {
     color: #F57F17;
     transform: rotate(-50deg);
-}
-
-.my-left {
-    float: left;
-}
-
-.my-right {
-    float: right;
 }
 
 nav {
@@ -128,123 +112,15 @@ nav {
     general styles
  ***/
 
-
-/***
-    styling for trip overview page
- ***/
-.trip-container {    
-    margin-bottom: 70px;
-    max-width: 700px;
-    margin: 0 auto 70px auto;
-}
-
-/* .trip-container:hover {
-    cursor: pointer;
-} */
-
 /* override default anchor tag styling for clickable container  */
-.trip-container a {
-  color: inherit;
-  text-decoration: none;
-}
-
-.icons a {
-    font-size: 8px;
-}
-
-.trip-header {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-
-    padding: 10px 5px 5px 5px;
-    font-size: 40px;
-    line-height: 1;
-
-    background-color: rgb(246, 248, 248);
-    border: 2px solid rgb(104, 208, 231);
-    border-bottom: 0;
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
-}
-
-.trip-container:hover .trip-header {
-    background-color:  rgb(104, 208, 231);
-    color: #fff;
-}
-
-
-.trip-header .from-date, .trip-header .to-date {
-    display: inline-flex;
-    width: 40%;
-    max-width: 150px;
-}
-
-
-.trip-header .big-date {
-    font-size: 50px;
-    font-weight: bold;
-    line-height: 1;
-}
-
-.trip-header .small-date {
-    padding-left: 20px;
-    line-height: 1.1;
-    letter-spacing: 4px;
-    font-size: 22px;
-    text-transform: uppercase;
-}
-
-
-
-.trip-body {
-    padding: 10px;
-    font-size: 16px;
-    border: 2px solid rgb(104, 208, 231);
-    border-bottom-left-radius: 10px;
-    border-bottom-right-radius: 10px;
-
-}
-
-.trip-item {
-    margin-top: 5px;
-    display: inline-block;
-    width: 100%;
-}
-
-.trip-item .title {
-    font-weight: bold;
-    float: left;
-}
-
-.trip-item .description {
-    float: right;
-}
-
-
 .trip-btns {
-/* add some css */
     color: #fff;
     float: right;
 }
-
-.trip-btns .my-btn {
-    margin: 10px 2px;
-}
-
 
 /***
     styles for trip_detailed page
  ***/
-
- .trip-overview {
-
- }
-
-
- .trip-breakdown {
-     
- }
 
  .trip-month {
      margin-bottom: 40px;
@@ -253,21 +129,4 @@ nav {
  .trip-month-header {
      text-transform: uppercase;
      border-bottom: 4px solid rgb(144, 217, 235);
- }
-
- .trip-stops {
-     margin-left: 20px;
- }
-
- .trip-stops li {
-    height: 40px;
-    line-height: 40px;
-
-    font-size: 20px;
-
-    background-color: rgb(247, 248, 248);
-    border-radius: 6px;
-
-    margin-bottom: 10px;
-    padding: 0 10px;
  }
