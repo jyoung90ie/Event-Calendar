@@ -616,6 +616,7 @@ def user_login():
             # save mongodb user _id as session to indicate logged in
             # convert ObjectId to string
             session['USERNAME'] = str(user['_id'])
+            session['DISPLAY_NAME'] = str(user['display_name'])
 
             # return user to 'My Trips' page
             return redirect(url_for('show_trips', show='user'))
