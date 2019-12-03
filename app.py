@@ -10,7 +10,6 @@ from flask import Flask, render_template, request, url_for, redirect, \
 load_dotenv()
 
 app = Flask(__name__)
-# app.config['MONGO_DBNAME'] = 'travelPal'
 app.config['MONGO_URI'] = os.getenv('MONGODB_URI')
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 
@@ -25,7 +24,11 @@ stops = mongo.db.stops
 
 def checkUserPermission(checkLogin=True, checkTripOwner=False,
                         checkStopOwner=False, trip_id='', stop_id=''):
-    # check to see if the user is logged in
+    '''
+    This checks if a user has been logged in by default. Additional checks
+    are included to determine if a user is the owner of a trip and thus
+    should have permission to add, update, and/or, remove trip details/stops.
+    '''
     if not session.get('USERNAME'):
         return False
 
@@ -90,6 +93,10 @@ def checkUserPermission(checkLogin=True, checkTripOwner=False,
 @app.route('/trips/')
 @app.route('/trips/<show>/')
 def show_trips(show='all'):
+    '''
+    Shows a filtered list of trips from the DB - those marked as public and
+    those the user owners (if logged in, otherwise just public trips displayed)
+    '''
 
     if checkUserPermission():
         user_id = ObjectId(session.get('USERNAME'))
@@ -224,6 +231,10 @@ def show_trips(show='all'):
 
 @app.route('/trip/new/', methods=['POST', 'GET'])
 def trip_new():
+    '''
+    Subject to user login status, this will create a new trip in the
+    database.
+    '''
     if not checkUserPermission():
         flash('Please login if you wish to perform this action')
         return redirect(url_for('show_trips'))
@@ -269,6 +280,10 @@ def trip_new():
 
 @app.route('/trip/<trip_id>/update/', methods=['POST', 'GET'])
 def trip_update(trip_id):
+    '''
+    Subject to user permissions, this will display an input form with
+    values retrieved from the database to facilitate update.
+    '''
     if not checkUserPermission():
         flash('Please login if you wish to perform this action')
         return redirect(url_for('show_trips'))
@@ -331,6 +346,10 @@ def trip_update(trip_id):
 
 @app.route('/trip/<trip_id>/delete/')
 def trip_delete(trip_id):
+    '''
+    Subject to user permissions, this will delete a trip and all
+    linked (via trip_id) stops.
+    '''
     if not checkUserPermission():
         flash('Please login if you wish to perform this action')
         return redirect(url_for('show_trips'))
@@ -363,6 +382,11 @@ def trip_delete(trip_id):
 
 @app.route('/trip/<trip_id>/detailed/')
 def trip_detailed(trip_id):
+    '''
+    This will display all trip information, including stops. If the user
+    owns this trip they will also be prompted with buttons to add, update,
+    and delete various attributes.
+    '''
     # check if the trip is public or private
     # if private, check that the user owns the trip - if not redirect back
     # if public, or the user owns this trip, then show the detail
@@ -380,6 +404,10 @@ def trip_detailed(trip_id):
 #
 @app.route('/trip/<trip_id>/stop/new/', methods=['POST', 'GET'])
 def trip_stop_new(trip_id):
+    '''
+    Subject to user permissions, this enables a user to add new stops
+    to their trip.
+    '''
     if not checkUserPermission():
         flash('Please login if you wish to perform this action')
         return redirect(url_for('trip_detailed', trip_id=trip_id))
@@ -437,6 +465,10 @@ def trip_stop_new(trip_id):
 @app.route('/trip/<trip_id>/stop/<stop_id>/duplicate/',
            methods=['POST', 'GET'])
 def trip_stop_duplicate(trip_id, stop_id):
+    '''
+    Duplicates a trip 'stop' for the user, to save time from filling in repeat
+    fields, such as country, city, etc.
+    '''
     if not checkUserPermission():
         flash('Please login if you wish to perform this action')
         return redirect(url_for('trip_detailed', trip_id=trip_id))
@@ -462,6 +494,10 @@ def trip_stop_duplicate(trip_id, stop_id):
 
 @app.route('/trip/<trip_id>/stop/<stop_id>/update/', methods=['POST', 'GET'])
 def trip_stop_update(trip_id, stop_id):
+    '''
+    Subject to user permissions, this will enable a permitted user to update a 
+    stop within a trip they own.
+    '''
     if not checkUserPermission():
         flash('Please login if you wish to perform this action')
         return redirect(url_for('trip_detailed', trip_id=trip_id))
@@ -533,6 +569,10 @@ def trip_stop_update(trip_id, stop_id):
 
 @app.route('/trip/<trip_id>/stop/<stop_id>/delete/')
 def trip_stop_delete(trip_id, stop_id):
+    '''
+    Subject to user permissions, this will enable a user to delete a
+    stop from a trip they own.
+    '''
     stop = checkUserPermission(checkLogin=True, checkStopOwner=True,
                                trip_id=trip_id, stop_id=stop_id)
 
@@ -559,6 +599,7 @@ def trip_stop_delete(trip_id, stop_id):
 # register
 @app.route('/user/register/', methods=['POST', 'GET'])
 def user_new():
+    ''' This creates a new user in the database. '''
     if checkUserPermission(checkLogin=True):
         # if the user is already logged in then redirect them
         return redirect(url_for('show_trips'))
@@ -602,6 +643,10 @@ def user_new():
 # login
 @app.route('/user/login/', methods=['POST', 'GET'])
 def user_login():
+    '''
+    This enables a user to login, allowing them to perform CRUD
+    operations on their own trips and/or stops.
+    '''
     if checkUserPermission():
         # if user already logged in then redirect away from login page
         return redirect(url_for('show_trips'))
@@ -630,12 +675,15 @@ def user_login():
 # logout
 @app.route('/user/logout/')
 def user_logout():
+    ''' This logs a user out and removes and session variables. '''
     if not checkUserPermission():
         # user is not logged in
         return redirect(url_for('show_trips'))
 
     # delete session variable
     session.pop('USERNAME', None)
+    session.pop('DISPLAY_NAME', None)
+
     flash('You have been logged out')
     return redirect(url_for('show_trips'))
 
@@ -643,6 +691,10 @@ def user_logout():
 # profile
 @app.route('/user/profile/')
 def user_profile():
+    '''
+    This will enable a user to view their database information
+    and perform updates, if required.
+    '''
     if not checkUserPermission():
         # user is not logged in
         return redirect(url_for('show_trips'))
