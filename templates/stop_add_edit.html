@@ -4,7 +4,8 @@
 
 {%- block header -%}
 <a href="{{ url_for('show_trips') }}" class="breadcrumb">My Trips</a>
-<a href="{{ url_for('trip_detailed', trip_id=trip['_id']) }}" class="breadcrumb">Trip: "{{ trip['name'] }}"</a>
+<a href="{{ url_for('trip_detailed', trip_id=trip['_id']) }}" class="breadcrumb">Trip:
+	<strong>{{ trip['name'] }}</strong></a>
 <a href="#!" class="breadcrumb">{{'Update' if action == 'update' else 'Add'}} Stop</a>
 {%- endblock -%}
 
