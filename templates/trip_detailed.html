@@ -10,72 +10,68 @@
 {% endblock %}
 
 {% block content %}
-<!-- <section class="page-description">Some text</section> -->
-<div class="row">
-	<!-- <header class="trip-overview col s12 m4"> -->
-	<!-- <h3>{{ trip['name'] }}</h3> -->
-	<header class="section col s12 l4">
-		<h4 class="trip-month-header">Overview</h4>
-		<div class="row">
-			<div class="col s6">Start Date:</div>
-			<div class="col s6">{{ trip['start_date'].strftime('%d %B %Y') }}</div>
-			<div class="col s6">End Date:</div>
-			<div class="col s6">{{ trip['end_date'].strftime('%d %B %Y') }}</div>
-			<div class="col s6">Duration:</div>
-			<div class="col s6">_duration_</div>
-			<div class="col s6">Avg Cost (pp/night):</div>
-			<div class="col s6">avg_cost</div>
-			<div class="col s6">Total Stops:</div>
-			<div class="col s6">no_of_stops</div>
-			<div class="col s6">Total Countries:</div>
-			<div class="col s6">no_of_countries</div>
+<header class="section col s12 l4">
+	<h4 class="trip-month-header">Overview</h4>
+	<div class="row">
+		<div class="col s6">Start Date:</div>
+		<div class="col s6">{{ trip['start_date'].strftime('%d %B %Y') }}</div>
+		<div class="col s6">End Date:</div>
+		<div class="col s6">{{ trip['end_date'].strftime('%d %B %Y') }}</div>
+		<div class="col s6">Duration:</div>
+		<div class="col s6">_duration_</div>
+		<div class="col s6">Avg Cost (pp/night):</div>
+		<div class="col s6">avg_cost</div>
+		<div class="col s6">Total Stops:</div>
+		<div class="col s6">no_of_stops</div>
+		<div class="col s6">Total Countries:</div>
+		<div class="col s6">no_of_countries</div>
+	</div>
+
+	<div class="row center">
+		<div class="col s12">
+			<table class="responsive-table centered highlight">
+				<thead>
+					<tr>
+						<th>Costs</th>
+						<th>Accommodation</th>
+						<th>Food</th>
+						<th>Other</th>
+					</tr>
+				</thead>
+
+				<tbody>
+					<tr>
+						<th>Per Person</th>
+						<td>Value 1</td>
+						<td>Value 2</td>
+						<td>Value 3</td>
+					</tr>
+					<tr>
+						<th>Total</th>
+						<td>Value 1</td>
+						<td>Value 2</td>
+						<td>Value 3</td>
+					</tr>
+				</tbody>
+			</table>
 		</div>
+	</div>
+	<!-- </div> -->
+</header>
 
-		<div class="row center">
-			<div class="col s12">
-				<table class="responsive-table centered highlight">
-					<thead>
-						<tr>
-							<th>Costs</th>
-							<th>Accommodation</th>
-							<th>Food</th>
-							<th>Other</th>
-						</tr>
-					</thead>
-
-					<tbody>
-						<tr>
-							<th>Per Person</th>
-							<td>Value 1</td>
-							<td>Value 2</td>
-							<td>Value 3</td>
-						</tr>
-						<tr>
-							<th>Total</th>
-							<td>Value 1</td>
-							<td>Value 2</td>
-							<td>Value 3</td>
-						</tr>
-					</tbody>
-				</table>
-			</div>
-		</div>
-		<!-- </div> -->
-	</header>
-
-	<section class="trip-breakdown">
+<section class="trip-breakdown">
+	<div class="row">
 		<div class="section col s12 l6 offset-l1">
-			<h4 class="trip-month-header">Trip Stops</h4>
 			{%- if stops.count() -%}
 			<article class="trip-month ">
+				<h4 class="trip-month-header">Stops</h4>
 				<!-- <h4 class="trip-month-header">MMMM YY</h4> -->
 				<!-- clicking on this will expand the article to show all the detail -->
 				<ul class="collapsible">
 					{%- for stop in stops -%}
 					<li>
-						<div class="collapsible-header">{{ stop['country']}} - {{stop['city/town']}}
-							[{{ stop['duration'] -}}
-							nights]</span>
+						<div class="collapsible-header">{{ stop['country']}} - {{ stop['city/town'] }}
+							[{{ stop['duration'] }} nights]
 							{%- if trip['owner_id']|string() == session.get('USERNAME', None)|string() -%}
 							<span class="right icons">
                         <a href="{{url_for('trip_stop_update', trip_id=trip['_id'], stop_id=stop['_id'])}}">
@@ -148,8 +144,8 @@
 			{%- endif -%}
 			{%- endif -%}
 		</div>
-	</section>
-</div>
+	</div>
+</section>
 <!-- floating link to add a new trip -->
 {%- if trip['owner_id']|string() == session.get('USERNAME', None)|string() -%}
 <aside class="fixed-action-btn">

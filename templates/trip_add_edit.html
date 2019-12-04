@@ -16,16 +16,16 @@
 
 {%- block content -%}
 <section>
-	<p class="page-description">
+	<h5>
 		{%- if action == 'update' -%}
 		update your trip
 		{%- else -%}
-		create a new trip - once created you can add as many stops as your heart desires
+		create a new trip
 		{%- endif -%}
-	</p>
+	</h5>
 	<div class="row">
 		<div class="col s12">
-			<form action="" method="POST">
+			<form method="POST">
 				<div class="row">
 					<div class="input-field col s12 m8">
 						<input id="trip-name" name="trip-name" type="text" class="validate"

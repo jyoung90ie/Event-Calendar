@@ -12,6 +12,7 @@
 
 {% block content %}
 <section class="row">
+	<h3>Trips</h3>
 	{% set results = {} %}
 	{% for trip in trips %}
 	{# this is used to update the global results obj #}
@@ -20,7 +21,7 @@
 	<div class="col s12 l6">
 		<div class="card medium sticky-action">
 			<div class="card-image waves-effect waves-block waves-light">
-				<img class="activator" src="https://placeimg.com/400/200/nature">
+				<img class="activator" src="https://placeimg.com/400/200/nature" alt="landscape image">
             </div>
 				<div class="card-content">
 					<span class="card-title activator grey-text text-darken-4">{{ trip['name'] }}</span>

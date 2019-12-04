@@ -10,10 +10,10 @@
 
 {%- block content -%}
 <section>
-	<p class="page-description">{{'Update Stop Details' if action == 'update' else 'Add a Stop to your Trip!'}}</p>
+	<h3>{{'Update Stop Details' if action == 'update' else 'Add a Stop to your Trip!'}}</h3>
 	<div class="row">
 		<div class="col s12">
-			<form action="" method="POST">
+			<form method="POST">
 				<div class="row">
 					<div class="input-field col s12 l6">
 						<input id="trip-name" name="trip-name" type="text" readonly="readonly" value="{{ trip['name'] }}">
