@@ -6,8 +6,7 @@
 <a href="{{ url_for('show_trips') }}" class="breadcrumb">All Trips</a>
 {%- if action == 'update' %}
 <a href="{{ url_for('show_trips') }}" class="breadcrumb">My Trips</a>
-<a href="{{ url_for('trip_detailed', trip_id=trip['_id']) }}" class="breadcrumb">Trip:
-	{{ trip['name'] }}</a>
+<a href="{{ url_for('trip_detailed', trip_id=trip['_id']) }}" class="breadcrumb">Trip: {{ trip['name'] }}</a>
 <a href="#!" class="breadcrumb">Update</a>
 {%- else %}
 <a href="#!" class="breadcrumb">New Trip</a>
@@ -55,12 +54,11 @@
 				<div class="row">
 					<div class="input-field col s12">
 						<label>
-                            <input id="public" name="public" type="checkbox" class="filled-in"
-                            {%- if action == 'update' -%} 
-                                {{ ' checked="checked"' if trip['public'] == True else '' }} 
+                            {% if action == 'update' -%} 
+                                <input id="public" name="public" type="checkbox" class="filled-in" {{- ' checked="checked"'|safe if trip['public'] == True else '' -}}>
                             {%- else -%}
-                                checked="checked"
-                            {%- endif -%}>
+                                <input id="public" name="public" type="checkbox" class="filled-in" checked="checked">
+                            {%- endif -%}
                             <span>Display Trip to Public?</span>
                         </label>
 					</div>

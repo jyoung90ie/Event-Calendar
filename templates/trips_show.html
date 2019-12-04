@@ -24,7 +24,9 @@
 				<img class="activator" src="https://placeimg.com/400/200/nature" alt="landscape image">
             </div>
 				<div class="card-content">
-					<span class="card-title activator grey-text text-darken-4">{{ trip['name'] }}</span>
+					<span class="card-title activator grey-text text-darken-4">
+                        <i class="material-icons">unfold_more</i>{{ trip['name'] }}
+                    </span>
 					<p>{{ trip['start_date'].day }} {{ trip['start_date'].strftime('%b') }}
 						{{ trip['start_date'].year }} - {{ trip['end_date'].day }} {{ trip['end_date'].strftime('%b') }}
 						{{ trip['end_date'].year }}</p>
@@ -44,7 +46,7 @@
 				</div>
 				<div class="card-reveal">
 					<div class="card-content">
-						<span class="card-title grey-text text-darken-4">{{ trip['name'] }}</span>
+						<span class="card-title grey-text text-darken-4"><i class="material-icons">unfold_less</i>{{ trip['name'] }}</span>
 						<div class="trip-item">
 							<span class="title">number of travelers:</span>
 							<span class="description">{{ trip['travelers'] }}</span>
