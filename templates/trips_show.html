@@ -14,7 +14,8 @@
 <section class="row">
 	<h3>Trips</h3>
 	{% set results = {} %}
-	{% for trip in trips %}
+
+	{%- for trip in trips -%}
 	{# this is used to update the global results obj #}
 	{% set results = results.update({'populated': True}) %}
 
@@ -25,8 +26,8 @@
             </div>
 				<div class="card-content">
 					<span class="card-title activator grey-text text-darken-4">
-                        <i class="material-icons">unfold_more</i>{{ trip['name'] }}
-                    </span>
+                    <i class="material-icons">unfold_more</i>{{ trip['name'] }}
+                </span>
 					<p>{{ trip['start_date'].day }} {{ trip['start_date'].strftime('%b') }}
 						{{ trip['start_date'].year }} - {{ trip['end_date'].day }} {{ trip['end_date'].strftime('%b') }}
 						{{ trip['end_date'].year }}</p>
@@ -46,50 +47,46 @@
 				</div>
 				<div class="card-reveal">
 					<div class="card-content">
-						<span class="card-title grey-text text-darken-4"><i class="material-icons">unfold_less</i>{{ trip['name'] }}</span>
-						<div class="trip-item">
-							<span class="title">number of travelers:</span>
-							<span class="description">{{ trip['travelers'] }}</span>
-						</div>
-						<div class="trip-item">
-							<span class="title">country:</span>
-							<span class="description">{{ trip['country'] if trip['country'] else 'N/A - no stops added' }}
+						<span class="card-title grey-text text-darken-4">
+                        <i class="material-icons">unfold_less</i>{{- trip['name'] }}
                     </span>
-						</div>
-						<div class="trip-item">
-							<span class="title">duration (nights):</span>
-							<span class="description">{{ trip['duration'] if trip['duration'] else 'N/A - no stops added' }}
-                    </span>
-						</div>
-						<div class="trip-item">
-							<span class="title">number of stops:</span>
-							<span class="description">
-                        {{ trip['number_of_stops'] if trip['number_of_stops'] else 'N/A - no stops added' }}</span>
-						</div>
-						<div class="trip-item">
-							<span class="title">total cost:</span>
-							<span class="description">
-                        {{ trip['total_cost'] if trip['total_cost'] else 'N/A - no stops added' }}
-                    </span>
-						</div>
-						<div class="trip-item">
-							<span class="title">creator:</span>
-							<span class="description">{{ trip['display_name'][0] }}</span>
-						</div>
+						<div class="row">
+							<div class="col s6">Number of Travelers:</div>
+							<div class="col s6">{{ trip['travelers'] }}</div>
 
+							<div class="col s6">Country:</div>
+							<div class="col s6">{{ trip['country'] if trip['country'] else 'N/A - no stops added' }}
+							</div>
+
+							<div class="col s6">Duration (nights):</div>
+							<div class="col s6">{{ trip['duration'] if trip['duration'] else 'N/A - no stops added' }}
+							</div>
+
+							<div class="col s6">Number of Stops:</div>
+							<div class="col s6">
+								{{ trip['number_of_stops'] if trip['number_of_stops'] else 'N/A - no stops added' }}
+							</div>
+
+							<div class="col s6">Total Cost:</div>
+							<div class="col s6">
+								{{ trip['total_cost'] if trip['total_cost'] else 'N/A - no stops added' }}
+							</div>
+
+							<div class="col s6">Creator:</div>
+							<div class="col s6">{{ trip['display_name'][0] }}</div>
+						</div>
 					</div>
 				</div>
 			</div>
 		</div>
+		{%- endfor -%}
 
-		{% endfor %}
-
-		{% if not results %}
-		<p>{{ 'You do not currently have any trips' if trips_showing == 'user' else 'There are currently no trips'}},
-			you
-			can
-			change this by clicking 'new trip' at the bottom of the screen</p>
-		{% endif %}
+		{% if not results -%}
+		<p class="col s12">
+			{{- 'You do not currently have any trips' if trips_showing == 'user' else 'There are currently no trips' -}},
+			you can change this by clicking 'new trip' at the bottom of the
+			screen</p>
+		{%- endif %}
 </section>
 <!-- floating link to add a new trip - only if user logged in -->
 {% if session.get('USERNAME') %}
