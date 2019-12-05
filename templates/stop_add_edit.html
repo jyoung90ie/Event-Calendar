@@ -14,66 +14,81 @@
 	<h3>{{'Update Stop Details' if action == 'update' else 'Add a Stop to your Trip!'}}</h3>
 	<div class="row">
 		<div class="col s12">
-			<form method="POST">
+			<form method="POST" novalidate>
+				{{ form.hidden_tag() }}
 				<div class="row">
 					<div class="input-field col s12 l6">
-						<input id="trip-name" name="trip-name" type="text" readonly="readonly" value="{{ trip['name'] }}">
-						<label for="trip-name">Trip Name</label>
+						{{ form.trip_name.label }}
+						{{ form.trip_name(readonly=true) }}
 					</div>
 					<div class="input-field col s12 m6 l3">
-						<input id="start-date" name="start-date" type="text" readonly="readonly" value="{{ trip['start_date'].strftime('%d %b %Y') }}">
-						<label for="start-date">Trip Start Date</label>
+						{{ form.trip_start_date.label }}
+						{{ form.trip_start_date(readonly=true) }}
 					</div>
 					<div class="input-field col s12 m6 l3">
-						<input id="end-date" name="end-date" type="text" readonly="readonly" value="{{ trip['end_date'].strftime('%d %b %Y') }}">
-						<label for="end-date">Trip End Date</label>
+						{{ form.trip_end_date.label }}
+						{{ form.trip_end_date(readonly=true) }}
 					</div>
 				</div>
-
 				<div class="row">
 					<div class="input-field col s12 m6 l4">
-						<input id="country" name="country" type="text" class="validate" value="{{ stop['country'] if action == 'update' else '' }}" required>
-						<label for="country">Country</label>
-						<span class="helper-text" data-error="Field must be populated"></span>
+						{{ form.country.label }}
+						{{ form.country() }}
+						{%- for error in form.country.errors %}
+						<span class="error">{{ error }}</span>
+						{% endfor -%}
 					</div>
 					<div class="input-field col s12 m6 l4">
-						<input id="city" name="city" type="text" class="validate" value="{{ stop['city/town'] if action == 'update' else '' }}" required>
-						<label for="city">City/Town</label>
-						<span class="helper-text" data-error="Field must be populated"></span>
+						{{ form.city_town.label }}
+						{{ form.city_town() }}
+						{%- for error in form.city_town.errors %}
+						<span class="error">{{ error }}</span>
+						{% endfor -%}
+					</div>
+				</div>
+				<div class="row">
+					<div class="input-field col s12 m6 l4">
+						{{ form.currency.label }}
+						{{ form.currency(maxlength=3) }}
+						{%- for error in form.currency.errors %}
+						<span class="error">{{ error }}</span>
+						{% endfor -%}
 					</div>
 					<div class="input-field col s12 m6 l4">
-						<input id="currency" name="currency" type="text" class="validate" value="{{ stop['currency'] if action == 'update' else '' }}" required>
-						<label for="currency">Currency</label>
-						<span class="helper-text" data-error="Field must be populated"></span>
-					</div>
-					<div class="input-field col s12 m6">
-						<input id="duration" name="duration" type="number" min="0" step="1" class="validate" value="{{ stop['duration'] if action == 'update' else '' }}" required>
-						<label for="duration">Duration (nights)</label>
-						<span class="helper-text" data-error="Field required and must contain whole numbers only"></span>
+						{{ form.duration.label }}
+						{{ form.duration() }}
+						{%- for error in form.duration.errors %}
+						<span class="error">{{ error }}</span>
+						{% endfor -%}
 					</div>
 				</div>
 				<p>Costs inputted below are per traveler (person), per night, they are <strong>not</strong> total
 					cost</p>
 				<div class="row">
 					<div class="input-field col s12 m4">
-						<input id="cost-accommodation" name="cost-accommodation" type="number" min="0"  step="0.01" class="validate" value="{{ stop['cost_accommodation'] if action == 'update' else '' }}" required>
-						<label for="cost-accommodation">Accommodation (Cost)</label>
-						<span class="helper-text" data-error="Field required and must be a number (max. 2 decimal places)"></span>
+						{{ form.cost_accommodation.label }}
+						{{ form.cost_accommodation() }}
+						{%- for error in form.cost_accommodation.errors %}
+						<span class="error">{{ error }}</span>
+						{% endfor -%}
 					</div>
 					<div class="input-field col s12 m4">
-						<input id="cost-food" name="cost-food" type="number" min="0" step="0.01" class="validate" value="{{ stop['cost_food'] if action == 'update' else '' }}" required>
-						<label for="cost-food">Food (Cost)</label>
-						<span class="helper-text" data-error="Field required and must be a number (max. 2 decimal places)"></span>
+						{{ form.cost_food.label }}
+						{{ form.cost_food() }}
+						{%- for error in form.cost_food.errors %}
+						<span class="error">{{ error }}</span>
+						{% endfor -%}
 					</div>
 					<div class="input-field col s12 m4">
-						<input id="cost-other" name="cost-other" type="number" min="0" step="0.01" class="validate" value="{{ stop['cost_other'] if action == 'update' else '' }}" required>
-						<label for="cost-other">Other (Cost)</label>
-						<span class="helper-text" data-error="Field required and must be a number (max. 2 decimal places)"></span>
+						{{ form.cost_other.label }}
+						{{ form.cost_other() }}
+						{%- for error in form.cost_other.errors %}
+						<span class="error">{{ error }}</span>
+						{% endfor -%}
 					</div>
 				</div>
-
-
-				<button class="btn waves-effect waves-light" type="submit" name="action">{{ 'Update' if action == 'update' else 'Add' }} 
+				<button class="btn waves-effect waves-light" type="submit" name="submit" id="submit">
+                    {{- 'Update' if action == 'update' else 'Add' -}} 
                     <i class="material-icons right">create</i>
                 </button>
 			</form>
