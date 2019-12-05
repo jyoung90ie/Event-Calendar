@@ -1,25 +1,11 @@
 from bson.objectid import ObjectId
 from datetime import datetime
-from flask_pymongo import PyMongo
-from dotenv import load_dotenv
 import os
 from flask import Flask, render_template, request, url_for, redirect, \
     make_response, jsonify, flash, session
-
-# get environment variables
-load_dotenv()
-
-app = Flask(__name__)
-app.config['MONGO_URI'] = os.getenv('MONGODB_URI')
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
-
-# initialise mongoDb
-mongo = PyMongo(app)
-
-# set collections variables
-users = mongo.db.users
-trips = mongo.db.trips
-stops = mongo.db.stops
+# user created files
+from db import app, trips, users, stops
+from forms import RegistrationForm, TripForm, StopForm, LoginForm
 
 
 def checkUserPermission(checkLogin=True, checkTripOwner=False,
@@ -231,51 +217,39 @@ def show_trips(show='all'):
 
 @app.route('/trip/new/', methods=['POST', 'GET'])
 def trip_new():
-    '''
-    Subject to user login status, this will create a new trip in the
-    database.
-    '''
-    if not checkUserPermission():
+    ''' This creates a new user in the database. '''
+    # if the user is already logged in then redirect them
+    if not checkUserPermission(checkLogin=True):
         flash('Please login if you wish to perform this action')
         return redirect(url_for('show_trips'))
 
-    if request.method == 'POST':
-        # create functionality to process form
-        # then add to db
-        # then redirect back to all trips
-
+    form = TripForm()
+    # check input validation
+    if form.validate_on_submit():
+        # create new entry if validation is successful
         try:
-            name = str(request.form.get('trip-name'))
-            travelers = int(request.form.get('travelers'))
-            # convert form date strings to datetime
-            startdate = datetime.strptime(
-                request.form.get('start-date'), '%d %b %Y')
-            enddate = datetime.strptime(
-                request.form.get('end-date'), '%d %b %Y')
-
-            # convert checkbox 'on' or 'off' to boolean value for storing
-            public = True if request.form.get('public') == 'on' else False
-
-            # create new entry if validation is successful
             newTrip = {
-                'name': name,
-                'travelers': travelers,
-                'start_date': startdate,
-                'end_date': enddate,
-                'owner_id': ObjectId(session.get('USERNAME')),
-                'public': public
+                'name': form.name.data,
+                'travelers': form.travelers.data,
+                'start_date': form.start_date.data,
+                'end_date': form.end_date.data,
+                'public': form.public.data,
+                'owner_id': ObjectId(session.get('USERNAME'))
             }
-
             trip = trips.insert_one(newTrip)
-
             flash('New trip has been created - you can add stops below')
 
-            return redirect(url_for('trip_detailed', trip_id=trip.inserted_id))
+            return redirect(url_for('trip_detailed',
+                                    trip_id=trip.inserted_id))
         except Exception as e:
             print(e)
-            return 'Input error'
+            flash('Database insertion error - please try again')
+
+        # if form did not successful validate or there was an exception
+        # error then redirect back to front page
+        return redirect(url_for('trip_new'))
     else:
-        return render_template('trip_add_edit.html', action='new')
+        return render_template('trip_add_edit.html', form=form, action='new')
 
 
 @app.route('/trip/<trip_id>/update/', methods=['POST', 'GET'])
@@ -293,34 +267,21 @@ def trip_update(trip_id):
         checkLogin=True, checkTripOwner=True, trip_id=trip_id)
 
     if trip:
-        if request.method == 'POST':
-            # when the form has been clicked
-            # need validation (all fields proper, id exists, id is owned by user)
-            # then iterate through field values and update in db
-            # then redirect back to all trips
+        form = TripForm()
+        # check input validation
+        if form.validate_on_submit():
+            # create new entry if validation is successful
             try:
-                name = str(request.form.get('trip-name'))
-                travelers = int(request.form.get('travelers'))
-
-                # convert form date strings to datetime
-                startdate = datetime.strptime(
-                    request.form.get('start-date'), '%d %b %Y')
-                enddate = datetime.strptime(
-                    request.form.get('end-date'), '%d %b %Y')
-                # convert checkbox 'on' or 'off' to boolean value for storing
-                public = True if request.form.get('public') == 'on' else False
-
-                # create new entry if validation is successful
                 updateCriteria = {
                     '_id': ObjectId(trip_id)
                 }
                 updateQuery = {
                     '$set': {
-                        'name': name,
-                        'travelers': travelers,
-                        'start_date': startdate,
-                        'end_date': enddate,
-                        'public': public
+                        'name': form.name.data,
+                        'travelers': form.travelers.data,
+                        'start_date': form.start_date.data,
+                        'end_date': form.end_date.data,
+                        'public': form.public.data
                     }
                 }
 
@@ -330,15 +291,27 @@ def trip_update(trip_id):
                 return redirect(url_for('trip_detailed', trip_id=trip_id))
             except Exception as e:
                 print(e)
-                return 'Input error'
+                flash('Database insertion error - please try again')
+
+            # if form did not successful validate or there was an exception
+            # error then redirect back to front page
+            return redirect(url_for('trip_new'))
         else:
-            # create functionality to pull trip information from db
-            # then populate this data into the form
-            trip_query = {'_id': ObjectId(trip_id)}
+            trip_query = trips.find_one({'_id': ObjectId(trip_id)})
 
-            return render_template('trip_add_edit.html', action='update',
-                                   trip=trips.find_one(trip_query))
+            if trip_query:
+                for field in trip_query:
+                    # populate the form with values from trip_query
+                    if field in form:
+                        # limit to only those fields which are in the form and
+                        # in the database
+                        form[field].data = trip_query[field]
 
+                return render_template('trip_add_edit.html', form=form,
+                                       action='update', trip=trip_query)
+            else:
+                flash('The trip you tried to access does not exist')
+                return redirect(url_for('show_trips'))
     else:
         # user does not own this trip, redirect to all trips
         return redirect(url_for('show_trips'))
@@ -417,46 +390,50 @@ def trip_stop_new(trip_id):
         checkLogin=True, checkTripOwner=True, trip_id=trip_id)
 
     if trip:
+
+        form = StopForm()
+    # check input validation
+
         # validate that user has permission to add a new stop to this
         # (i.e. owner_id=user_id)
         # if not redirect back to trip detailed page
-        if request.method == 'POST':
+        if form.validate_on_submit():
+            # create new entry if validation is successful
             try:
-                # strings
-                country = str(request.form.get('country'))
-                city = str(request.form.get('city'))
-                currency = str(request.form.get('currency'))
-
-                # numbers
-                duration = int(request.form.get('duration'))
-                cost_accommodation = float(
-                    request.form.get('cost-accommodation'))
-                cost_food = float(request.form.get('cost-food'))
-                cost_other = float(request.form.get('cost-other'))
-
-                # create new entry if validation is successful
                 newStop = {
                     'trip_id': ObjectId(trip_id),
-                    'country': country,
-                    'city/town': city,
-                    'duration': duration,
+                    'country': form.country.data,
+                    'city_town': form.city_town.data,
+                    'duration': form.duration.data,
                     'order': 1,
-                    'currency': currency,
-                    'cost_accommodation': cost_accommodation,
-                    'cost_food': cost_food,
-                    'cost_other': cost_other
+                    'currency': form.currency.data,
+                    'cost_accommodation': float(form.cost_accommodation.data),
+                    'cost_food': float(form.cost_food.data),
+                    'cost_other': float(form.cost_other.data)
                 }
                 stops.insert_one(newStop)
-
                 flash('You have added a new stop to this trip')
-                return redirect(url_for('trip_detailed', trip_id=trip_id))
+
             except Exception as e:
                 print(e)
-                return 'Input error'
+                flash('Database insertion error - please try again')
+
+            # if form did not successful validate or there was an exception
+            # error then redirect back to front page
+            return redirect(url_for('trip_detailed', trip_id=trip_id))
         else:
-            # need to pass through trip information from database
-            tripQuery = trips.find_one({'_id': ObjectId(trip_id)})
-            return render_template('stop_add_edit.html', trip=tripQuery, action='new')
+            trip_query = trips.find_one({'_id': ObjectId(trip_id)})
+            prefix = 'trip_'  # used to identify trip form fields
+            if trip_query:
+                for field in trip_query:
+                    # populate the form with values from trip_query
+                    if (prefix + field) in form:
+                        # limit to only those fields which are in the form and
+                        # in the database
+                        form[(prefix + field)].data = trip_query[field]
+
+            return render_template('stop_add_edit.html', form=form,
+                                   action='new', trip=trip_query)
     else:
         # if no trip_id or user not logged in then redirect to show all trips
         return redirect(url_for('show_trips'))
@@ -483,7 +460,8 @@ def trip_stop_duplicate(trip_id, stop_id):
 
         newStop = stops.insert_one(copyOfStop)
         flash('Stop added - you can modify the details below')
-        return redirect(url_for('trip_stop_update', trip_id=trip_id, stop_id=newStop.inserted_id))
+        return redirect(url_for('trip_stop_update', trip_id=trip_id,
+                                stop_id=newStop.inserted_id))
     else:
         flash(
             'The stop you are trying to access does not exist or you do '
@@ -495,7 +473,7 @@ def trip_stop_duplicate(trip_id, stop_id):
 @app.route('/trip/<trip_id>/stop/<stop_id>/update/', methods=['POST', 'GET'])
 def trip_stop_update(trip_id, stop_id):
     '''
-    Subject to user permissions, this will enable a permitted user to update a 
+    Subject to user permissions, this will enable a permitted user to update a
     stop within a trip they own.
     '''
     if not checkUserPermission():
@@ -506,25 +484,11 @@ def trip_stop_update(trip_id, stop_id):
                                trip_id=trip_id, stop_id=stop_id)
 
     if stop:
-        if request.method == 'POST':
-            # when the form has been clicked
-            # need validation (all fields proper, id exists, id is owned by user)
-            # then iterate through field values and update in db
-            # then redirect back to all trips
+        form = StopForm()
+        # check input validation
+        if form.validate_on_submit():
+            # create new entry if validation is successful
             try:
-                # strings
-                country = str(request.form.get('country'))
-                city = str(request.form.get('city'))
-                currency = str(request.form.get('currency'))
-
-                # numbers
-                duration = int(request.form.get('duration'))
-                cost_accommodation = float(
-                    request.form.get('cost-accommodation'))
-                cost_food = float(request.form.get('cost-food'))
-                cost_other = float(request.form.get('cost-other'))
-
-                # create new entry if validation is successful
                 updateCriteria = {
                     '_id': ObjectId(stop_id)
                 }
@@ -532,34 +496,59 @@ def trip_stop_update(trip_id, stop_id):
                 updateQuery = {
                     '$set': {
                         'trip_id': ObjectId(trip_id),
-                        'country': country,
-                        'city/town': city,
-                        'duration': duration,
+                        'country': form.country.data,
+                        'city_town': form.city_town.data,
+                        'duration': form.duration.data,
                         'order': 1,
-                        'currency': currency,
-                        'cost_accommodation': cost_accommodation,
-                        'cost_food': cost_food,
-                        'cost_other': cost_other
+                        'currency': form.currency.data,
+                        'cost_accommodation':
+                            float(form.cost_accommodation.data),
+                        'cost_food': float(form.cost_food.data),
+                        'cost_other': float(form.cost_other.data)
                     }
                 }
 
-                # process query
                 stops.update_one(updateCriteria, updateQuery)
 
-                flash('Your trip has been updated')
-                return redirect(url_for('trip_detailed', trip_id=trip_id))
+                flash('The stop has been updated')
             except Exception as e:
                 print(e)
-                return 'Input error'
-        else:
-            # create functionality to pull trip information from db
-            # then populate this data into the form
-            trip = trips.find_one({'_id': ObjectId(trip_id)})
-            stop = stops.find_one({'_id': ObjectId(stop_id)})
+                flash('Database insertion error - please try again')
 
-            return render_template('stop_add_edit.html', trip=trip,
-                                   stop=stop, action='update')
+            # if form did not successful validate or there was an exception
+            # error then redirect back to front page
+            return redirect(url_for('trip_detailed', trip_id=trip_id))
+        else:
+            trip_query = trips.find_one({'_id': ObjectId(trip_id)})
+            stop_query = stops.find_one({'_id': ObjectId(stop_id)})
+
+            if trip_query and stop_query:
+                prefix = 'trip_'  # used to identify trip form fields
+
+                # update the form fields with trip data
+                for field in trip_query:
+                    # populate the form with values from trip_query
+                    if (prefix + field) in form:
+                        # limit to only those fields which are in the form and
+                        # in the database
+                        form[(prefix + field)].data = trip_query[field]
+
+                # update the form fields with stop data
+                for field in stop_query:
+                    # populate the form with values from trip_query
+                    if field in form:
+                        # limit to only those fields which are in the form and
+                        # in the database
+                        form[field].data = stop_query[field]
+
+                return render_template('stop_add_edit.html', form=form,
+                                       action='update', trip=trip_query,
+                                       stop=stop_query)
+            else:
+                flash('The trip or stop you tried to access does not exist')
+                return redirect(url_for('show_trips'))
     else:
+        # user does not own this trip, redirect to all trips
         flash(
             'The stop you are trying to access does not exist or you do '
             'not have permission to perform the action')
@@ -595,50 +584,39 @@ def trip_stop_delete(trip_id, stop_id):
 #
 # user functionality
 #
-
-# register
 @app.route('/user/register/', methods=['POST', 'GET'])
 def user_new():
     ''' This creates a new user in the database. '''
+    # if the user is already logged in then redirect them
     if checkUserPermission(checkLogin=True):
-        # if the user is already logged in then redirect them
         return redirect(url_for('show_trips'))
 
-    if request.method == 'POST':
-        # create functionality to process form
-        # then add to db
-        # then redirect back to all trips
-
+    form = RegistrationForm()
+    # check input validation
+    if form.validate_on_submit():
         try:
-            formUsername = request.form.get('username')
+            # create new entry if validation is successful
+            newUser = {
+                'username': form.username.data,
+                'name': form.name.data,
+                'display_name': form.display_name.data,
+                'email': form.email.data,
+                'password': ''
+            }
+            users.insert_one(newUser)
 
-            user = users.find_one({"username": formUsername})
+            flash('A new account has been successfully created - you '
+                  'can now login')
+            return redirect(url_for('show_trips'))
 
-            # check to see if username already exists
-            if user:
-                flash(
-                    'Error: this user already exists, please select a different username')
-                return redirect(url_for('user_new'))
-            else:
-
-                # create new entry if validation is successful
-                newUser = {
-                    'username': request.form.get('username'),
-                    'name': request.form.get('name'),
-                    'display_name': request.form.get('display-name'),
-                    'email': request.form.get('email'),
-                    'password': ''
-                }
-                users.insert_one(newUser)
-
-                flash('A new account has been successfully created - you can '
-                      'now login')
-                return redirect(url_for('show_trips'))
         except Exception as e:
             print(e)
-            return 'Input error'
+            flash(
+                'There was a problem creating this user account - please '
+                'try again later')
     else:
-        return render_template('user_register.html')
+        return render_template('user_register.html', form=form)
+
 
 # login
 @app.route('/user/login/', methods=['POST', 'GET'])
@@ -651,10 +629,11 @@ def user_login():
         # if user already logged in then redirect away from login page
         return redirect(url_for('show_trips'))
 
-    if request.method == 'POST':
+    form = LoginForm()
+    # check input validation
+    if form.validate_on_submit():
         # check that the username exists in the database
-        user = users.find_one(
-            {"username": request.form.get('username')})
+        user = users.find_one({"username": form.username.data})
 
         if user:
             flash('You are now logged in to your account')
@@ -669,7 +648,7 @@ def user_login():
             flash('No user exists with this username - please try again')
             return redirect(url_for('user_login'))
     else:
-        return render_template('user_login.html')
+        return render_template('user_login.html', form=form)
 
 
 # logout
