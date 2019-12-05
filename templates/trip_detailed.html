@@ -70,7 +70,7 @@
 				{%- for stop in stops -%}
 				<li>
 					<div class="collapsible-header"><i class="material-icons">arrow_drop_down</i>
-						{{ stop['country']}} - {{ stop['city/town'] }} ({{ stop['duration'] }} nights)
+						{{ stop['country']}} - {{ stop['city_town'] }} ({{ stop['duration'] }} nights)
 						{%- if trip['owner_id']|string() == session.get('USERNAME', None)|string() -%}
 						<div class="icons">
 							<a href="{{url_for('trip_stop_update', trip_id=trip['_id'], stop_id=stop['_id'])}}">
