@@ -20,13 +20,17 @@
 		<div class="col s6">Travelers:</div>
 		<div class="col s6">{{ trip['travelers'] }}</div>
 		<div class="col s6">Duration:</div>
-		<div class="col s6">_duration_</div>
-		<div class="col s6">Avg Cost (pp/night):</div>
-		<div class="col s6">avg_cost</div>
+		<div class="col s6">{{ trip['total_duration'] }}</div>
+	</div>
+	<div class="row overview">
+		<div class="col s6">Trip Cost:</div>
+		<div class="col s6">{{ "%.2f" | format(trip['trip_total_cost']) }}</div>
+		<div class="col s6">Cost per night:</div>
+		<div class="col s6">{{ "%.2f" | format(trip['avg_cost_pn']) }}</div>
 		<div class="col s6">Total Stops:</div>
-		<div class="col s6">no_of_stops</div>
+		<div class="col s6">{{ trip['total_stops'] }}</div>
 		<div class="col s6">Total Countries:</div>
-		<div class="col s6">no_of_countries</div>
+		<div class="col s6">{{ trip['total_countries'] }}</div>
 	</div>
 
 	<div class="row center">
@@ -44,15 +48,15 @@
 				<tbody>
 					<tr>
 						<th>Per Person</th>
-						<td>Value 1</td>
-						<td>Value 2</td>
-						<td>Value 3</td>
+						<td>{{ "%.2f" | format(trip['total_accom_pp']) }}</td>
+						<td>{{ "%.2f" | format(trip['total_food_pp']) }}</td>
+						<td>{{ "%.2f" | format(trip['total_other_pp']) }}</td>
 					</tr>
 					<tr>
 						<th>Total</th>
-						<td>Value 1</td>
-						<td>Value 2</td>
-						<td>Value 3</td>
+						<td>{{ "%.2f" | format(trip['total_accom']) }}</td>
+						<td>{{ "%.2f" | format(trip['total_food']) }}</td>
+						<td>{{ "%.2f" | format(trip['total_other']) }}</td>
 					</tr>
 				</tbody>
 			</table>
@@ -65,7 +69,7 @@
 	<h4 class="trip-detailed-header">Stops</h4>
 	<div class="row">
 		<div class="col s12">
-			{%- if stops.count() -%}
+			{%- if stops -%}
 			<ul class="collapsible">
 				{%- for stop in stops -%}
 				<li>
@@ -73,13 +77,13 @@
 						{{ stop['country']}} - {{ stop['city_town'] }} ({{ stop['duration'] }} nights)
 						{%- if trip['owner_id']|string() == session.get('USERNAME', None)|string() -%}
 						<div class="icons">
-							<a href="{{url_for('trip_stop_update', trip_id=trip['_id'], stop_id=stop['_id'])}}">
+							<a href="{{url_for('trip_stop_update', trip_id=trip['_id'], stop_id=stop['stop_id'])}}">
 								<i class="small material-icons" title="Update">edit</i>
 							</a>
-							<a href="{{url_for('trip_stop_duplicate', trip_id=trip['_id'], stop_id=stop['_id'])}}">
+							<a href="{{url_for('trip_stop_duplicate', trip_id=trip['_id'], stop_id=stop['stop_id'])}}">
 								<i class="small material-icons" title="Duplicate">content_copy</i>
 							</a>
-							<a href="{{url_for('trip_stop_delete', trip_id=trip['_id'], stop_id=stop['_id'])}}">
+							<a href="{{url_for('trip_stop_delete', trip_id=trip['_id'], stop_id=stop['stop_id'])}}">
 								<i class="small material-icons" title="Delete">delete</i>
 							</a>
 						</div>
@@ -88,9 +92,9 @@
 					<div class="collapsible-body">
 						<div class="row">
 							<div class="col s6"><strong>Start Date:</strong></div>
-							<div class="col s6">_start_date_</div>
+							<div class="col s6">{{ stop['stop_start_date'].strftime('%d %B %Y') }}</div>
 							<div class="col s6"><strong>End Date:</strong></div>
-							<div class="col s6">_end_date_</div>
+							<div class="col s6">{{ stop['stop_end_date'].strftime('%d %B %Y') }}</div>
 							<div class="col s6"><strong>Duration:</strong></div>
 							<div class="col s6">{{ stop['duration'] }}</div>
 							<div class="col s6"><strong>Currency:</strong></div>
@@ -106,23 +110,23 @@
 										</tr>
 									</thead>
 									<tbody>
-										<tr>
+										<!-- <tr>
 											<th>Total (per person/night)</th>
-											<td>{{ stop['cost_accommodation'] }}</td>
-											<td>{{ stop['cost_food'] }}</td>
-											<td>{{ stop['cost_other'] }}</td>
-										</tr>
+											<td>{# "%.2f" | format(stop['cost_accommodation']) #}</td>
+											<td>{# "%.2f" | format(stop['cost_food']) #}</td>
+											<td>{# "%.2f" | format(stop['cost_other']) #}</td>
+										</tr> -->
 										<tr>
 											<th>Total (per person)</th>
-											<td>{{ stop['cost_accommodation'] }}</td>
-											<td>{{ stop['cost_food'] }}</td>
-											<td>{{ stop['cost_other'] }}</td>
+											<td>{{ "%.2f" | format(stop['stop_total_accom_pp']) }}</td>
+											<td>{{ "%.2f" | format(stop['stop_total_food_pp']) }}</td>
+											<td>{{ "%.2f" | format(stop['stop_total_other_pp']) }}</td>
 										</tr>
 										<tr>
 											<th>Total</th>
-											<td>{{ stop['cost_accommodation'] }}</td>
-											<td>{{ stop['cost_food'] }}</td>
-											<td>{{ stop['cost_other'] }}</td>
+											<td>{{ "%.2f" | format(stop['stop_total_accom']) }}</td>
+											<td>{{ "%.2f" | format(stop['stop_total_food']) }}</td>
+											<td>{{ "%.2f" | format(stop['stop_total_other']) }}</td>
 										</tr>
 									</tbody>
 								</table>
