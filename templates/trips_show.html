@@ -69,7 +69,7 @@
 
 							<div class="col s6">Total Cost:</div>
 							<div class="col s6">
-								{{ trip['total_cost'] if trip['total_cost'] else 'N/A - no stops added' }}
+								{{ "%.2f" | format(trip['total_cost']) if trip['total_cost'] else 'N/A - no stops added' }}
 							</div>
 
 							<div class="col s6">Creator:</div>
