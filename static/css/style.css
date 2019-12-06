@@ -10,6 +10,7 @@ h1 {
 
 .nav-wrapper a, .nav-wrapper span {
     color: #041748;
+    background-color: rgb(231, 255, 254);
 }
 
 .welcome {
@@ -18,7 +19,6 @@ h1 {
 
 .breadcrumb {
     color: #000;
-    background-color: none;
 }
 
 .breadcrumb:before {
@@ -112,6 +112,11 @@ nav {
     general styles
  ***/
 
+/* form validation class */
+.error {
+    color: red;
+}
+
 /* override default anchor tag styling for clickable container  */
 .trip-btns {
     color: #fff;
@@ -122,11 +127,27 @@ nav {
     styles for trip_detailed page
  ***/
 
- .trip-month {
-     margin-bottom: 40px;
- }
-
- .trip-month-header {
-     text-transform: uppercase;
+ .trip-detailed-header {
+     text-transform: capitalize;
+     padding: 0 0 5px 10px;
      border-bottom: 4px solid rgb(144, 217, 235);
  }
+
+ .overview {
+    padding-left: 20px;
+    padding-right: 20px;
+ }
+
+.icons {
+    margin-left: auto;
+    
+}
+
+.icons i {
+    margin: 0;
+}
+
+.collapsible {
+    margin-left: 20px;
+    margin-right: 20px;
+}
