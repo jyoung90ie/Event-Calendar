@@ -1,5 +1,5 @@
 from bson.objectid import ObjectId
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 from flask import Flask, render_template, request, url_for, redirect, \
     make_response, jsonify, flash, session
@@ -365,12 +365,267 @@ def trip_detailed(trip_id):
     # if public, or the user owns this trip, then show the detail
     # need to query trips and stops
     # iterate through all stops
-    trip_query = {'_id': ObjectId(trip_id)}
-    stop_query = {'trip_id': ObjectId(trip_id)}
+    # trip_query = {'_id': ObjectId(trip_id)}
+    # stop_query = {'trip_id': ObjectId(trip_id)}
 
-    return render_template('trip_detailed.html',
-                           trip=trips.find_one(trip_query),
-                           stops=stops.find(stop_query))
+    trip_pipeline = [
+        {
+            '$match': {
+                'trip_id': ObjectId(trip_id)
+            }
+        },
+        {
+            '$group': {
+                '_id': {
+                    'trip_id': '$trip_id',
+                    'country': '$country'
+                },
+                'stats': {
+                    '$push': {
+                        'total_cost_pp': {
+                            '$multiply':
+                                ['$duration',
+                                 {'$add':
+                                  ['$cost_accommodation',
+                                      '$cost_food', '$cost_other']
+                                  }]
+                        },
+                        # cost per night per person
+                        'total_cost_pp_pn': {
+                                '$add': ['$cost_accommodation', '$cost_food', '$cost_other']
+                        },
+                        'total_accom_pp': {
+                            '$multiply': ['$duration', '$cost_accommodation']
+                        },
+                        'total_food_pp': {
+                            '$multiply': ['$duration', '$cost_food']
+                        },
+                        'total_other_pp': {
+                            '$multiply': ['$duration', '$cost_other']
+                        },
+                    }
+                },
+                'total_stops': {'$sum': 1},
+                'total_duration': {'$sum': '$duration'}
+            }
+        },
+        {
+            '$group': {
+                '_id': '$_id.trip_id',
+                'total_countries': {'$sum': 1},
+                'total_stops': {'$sum': '$total_stops'},
+                'total_duration': {'$sum': '$total_duration'},
+                'stats': {'$push': '$stats'}
+            }
+        },
+        {
+            '$unwind': {
+                'path': '$stats'
+            }
+        },
+        {
+            '$unwind': {
+                'path': '$stats'
+            }
+        },
+        {
+            '$group': {
+                '_id': '$_id',
+                'total_countries': {'$max': '$total_countries'},
+                'total_stops': {'$max': '$total_stops'},
+                'total_duration': {'$max': '$total_duration'},
+                'total_cost_pp': {'$sum': '$stats.total_cost_pp'},
+                'total_cost_pp_pn': {'$sum': '$stats.total_cost_pp_pn'},
+                'total_accom_pp': {'$sum': '$stats.total_accom_pp'},
+                'total_food_pp': {'$sum': '$stats.total_food_pp'},
+                'total_other_pp': {'$sum': '$stats.total_other_pp'}
+            }
+        },
+        {
+            '$lookup':
+            {
+                'from': 'trips',
+                'let': {'trip_id': '$_id'},  # this becomes $$trip_id
+                'pipeline': [{
+                    '$match': {
+                        '$expr': {
+                            '$eq': ['$$trip_id', '$_id']
+                        }
+                    }
+                }],
+                'as': 'trips'
+            }
+        },
+        {
+            '$unwind': {
+                'path': '$trips'
+            }
+        },
+        {
+            '$project': {
+                '_id': 1,
+                'name': '$trips.name',
+                'start_date': '$trips.start_date',
+                'end_date': '$trips.end_date',
+                'owner_id': '$trips.owner_id',
+                'public': '$trips.public',
+                'travelers': '$trips.travelers',
+                'owner_id': '$trips.owner_id',
+                'total_duration': '$total_duration',
+                'total_stops': '$total_stops',
+                'total_countries': '$total_countries',
+                'total_cost': {
+                    '$multiply': ['$trips.travelers', '$total_cost_pp']
+                },
+                'total_cost_pp': '$total_cost_pp',
+                'total_accom_pp': '$total_accom_pp',
+                'total_food_pp': '$total_food_pp',
+                'total_other_pp': '$total_other_pp',
+                'avg_cost_pn': {
+                    '$divide': [{'$multiply': ['$trips.travelers', '$total_cost_pp']}, '$total_duration']
+                },
+                'total_accom': {
+                    '$multiply': ['$trips.travelers', '$total_accom_pp']
+                },
+                'total_food': {
+                    '$multiply': ['$trips.travelers', '$total_food_pp']
+                },
+                'total_other': {
+                    '$multiply': ['$trips.travelers', '$total_other_pp']
+                },
+            }
+        }
+    ]
+
+    # aggregrate returns a cursor - need to convert to list to access
+    # query will only return 1 result, which is stored at index 0 hence [0]
+    trip_detail = list(stops.aggregate(trip_pipeline))[0]
+
+    # create array to contain all stops detail - produced via aggregate
+    # then loop through cursor, creating new array which is passed to the
+    # template
+
+    stop_pipeline = [
+        {
+            u"$match": {
+                u"_id": ObjectId(trip_id)
+            }
+        },
+        {
+            u"$lookup": {
+                u"from": u"stops",
+                u"localField": u"_id",
+                u"foreignField": u"trip_id",
+                u"as": u"stops"
+            }
+        },
+        {
+            u"$unwind": {
+                u"path": u"$stops",
+                u"includeArrayIndex": u"arrayIndex",
+                u"preserveNullAndEmptyArrays": False
+            }
+        },
+        {
+            u"$addFields": {
+                u"stops.start_date": {
+                    u"$ifNull": [
+                        u"${stops.end_date}",
+                        u"$start_date"
+                    ]
+                },
+                u"stops.end_date": {
+                    u"$add": [
+                        u"$start_date",
+                        {
+                            u"$multiply": [
+                                u"$stops.duration",
+                                24.0,
+                                3600.0,
+                                1000.0
+                            ]
+                        }
+                    ]
+                }
+            }
+        }
+    ]
+
+    cursor = trips.aggregate(stop_pipeline)
+
+    last_trip_id = ''
+    # last_trip_start_date = ''
+    # last_stop_start_date = ''
+    # last_stop_end_date = ''
+    # stop_total_accom = 0
+    # stop_total_food = 0
+    # stop_total_other = 0
+    # stop_total_accom_pp = 0
+    # stop_total_food_pp = 0
+    # stop_total_other_pp = 0
+
+    stops_arr = []
+
+    for doc in cursor:
+        stop_duration = doc['stops']['duration']
+        trip_travelers = doc['travelers']
+
+        # costs per person for the stop
+        stop_total_accom_pp = stop_duration * \
+            doc['stops']['cost_accommodation']
+        stop_total_food_pp = stop_duration * doc['stops']['cost_food']
+        stop_total_other_pp = stop_duration * doc['stops']['cost_other']
+
+        # total cost for stop
+        stop_total_accom = trip_travelers * stop_total_accom_pp
+        stop_total_food = trip_travelers * stop_total_food_pp
+        stop_total_other = trip_travelers * stop_total_other_pp
+
+        if last_trip_id == doc['_id']:
+            # same trip, different stop - continue
+            last_stop_start_date = last_stop_end_date
+            last_stop_end_date = last_stop_start_date + \
+                timedelta(days=stop_duration)
+
+        else:
+            # new trip, new stop - reset
+            last_trip_start_date = doc['start_date']
+            last_stop_start_date = last_trip_start_date
+            last_stop_end_date = last_trip_start_date + \
+                timedelta(days=stop_duration)
+
+        last_trip_id = doc['_id']
+
+        data = {
+            'trip_id': last_trip_id,
+            'stop_id': doc['stops']['_id'],
+            'duration': stop_duration,
+            'travelers': trip_travelers,
+            'country': doc['stops']['country'],
+            'city_town': doc['stops']['city_town'],
+            'currency': doc['stops']['currency'],
+
+            'stop_start_date': last_stop_start_date,
+            'stop_end_date': last_stop_end_date,
+
+            'stop_total_accom_pp': stop_total_accom_pp,
+            'stop_total_food_pp': stop_total_food_pp,
+            'stop_total_other_pp': stop_total_other_pp,
+
+            'stop_total_accom': stop_total_accom,
+            'stop_total_food': stop_total_food,
+            'stop_total_other': stop_total_other
+        }
+
+        stops_arr.append(data)
+
+    # stop_detail = stops.find({'trip_id': ObjectId(trip_id)})
+
+    return render_template('trip_detailed.html', trip=trip_detail,
+                           stops=stops_arr)
+    # return render_template('trip_detailed.html',
+    #                        trip=trips.find_one(trip_query),
+    #                        stops=stops.find(stop_query))
 
 #
 # stops functionality
@@ -392,11 +647,7 @@ def trip_stop_new(trip_id):
     if trip:
 
         form = StopForm()
-    # check input validation
 
-        # validate that user has permission to add a new stop to this
-        # (i.e. owner_id=user_id)
-        # if not redirect back to trip detailed page
         if form.validate_on_submit():
             # create new entry if validation is successful
             try:
@@ -527,7 +778,7 @@ def trip_stop_update(trip_id, stop_id):
 
                 # update the form fields with trip data
                 for field in trip_query:
-                    # populate the form with values from trip_query
+                    # populate the form with values from query
                     if (prefix + field) in form:
                         # limit to only those fields which are in the form and
                         # in the database
@@ -535,10 +786,8 @@ def trip_stop_update(trip_id, stop_id):
 
                 # update the form fields with stop data
                 for field in stop_query:
-                    # populate the form with values from trip_query
+                    # populate the form with values from query
                     if field in form:
-                        # limit to only those fields which are in the form and
-                        # in the database
                         form[field].data = stop_query[field]
 
                 return render_template('stop_add_edit.html', form=form,
@@ -548,7 +797,7 @@ def trip_stop_update(trip_id, stop_id):
                 flash('The trip or stop you tried to access does not exist')
                 return redirect(url_for('show_trips'))
     else:
-        # user does not own this trip, redirect to all trips
+        # user does not own this trip
         flash(
             'The stop you are trying to access does not exist or you do '
             'not have permission to perform the action')
@@ -665,20 +914,6 @@ def user_logout():
 
     flash('You have been logged out')
     return redirect(url_for('show_trips'))
-
-
-# profile
-@app.route('/user/profile/')
-def user_profile():
-    '''
-    This will enable a user to view their database information
-    and perform updates, if required.
-    '''
-    if not checkUserPermission():
-        # user is not logged in
-        return redirect(url_for('show_trips'))
-
-    return render_template('placeholder.html', run_function='Profile')
 
 
 if __name__ == '__main__':
