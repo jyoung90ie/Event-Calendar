@@ -360,146 +360,6 @@ def trip_detailed(trip_id):
     owns this trip they will also be prompted with buttons to add, update,
     and delete various attributes.
     '''
-    # check if the trip is public or private
-    # if private, check that the user owns the trip - if not redirect back
-    # if public, or the user owns this trip, then show the detail
-    # need to query trips and stops
-    # iterate through all stops
-    # trip_query = {'_id': ObjectId(trip_id)}
-    # stop_query = {'trip_id': ObjectId(trip_id)}
-
-    trip_pipeline = [
-        {
-            '$match': {
-                'trip_id': ObjectId(trip_id)
-            }
-        },
-        {
-            '$group': {
-                '_id': {
-                    'trip_id': '$trip_id',
-                    'country': '$country'
-                },
-                'stats': {
-                    '$push': {
-                        'total_cost_pp': {
-                            '$multiply':
-                                ['$duration',
-                                 {'$add':
-                                  ['$cost_accommodation',
-                                      '$cost_food', '$cost_other']
-                                  }]
-                        },
-                        # cost per night per person
-                        'total_cost_pp_pn': {
-                                '$add': ['$cost_accommodation', '$cost_food', '$cost_other']
-                        },
-                        'total_accom_pp': {
-                            '$multiply': ['$duration', '$cost_accommodation']
-                        },
-                        'total_food_pp': {
-                            '$multiply': ['$duration', '$cost_food']
-                        },
-                        'total_other_pp': {
-                            '$multiply': ['$duration', '$cost_other']
-                        },
-                    }
-                },
-                'total_stops': {'$sum': 1},
-                'total_duration': {'$sum': '$duration'}
-            }
-        },
-        {
-            '$group': {
-                '_id': '$_id.trip_id',
-                'total_countries': {'$sum': 1},
-                'total_stops': {'$sum': '$total_stops'},
-                'total_duration': {'$sum': '$total_duration'},
-                'stats': {'$push': '$stats'}
-            }
-        },
-        {
-            '$unwind': {
-                'path': '$stats'
-            }
-        },
-        {
-            '$unwind': {
-                'path': '$stats'
-            }
-        },
-        {
-            '$group': {
-                '_id': '$_id',
-                'total_countries': {'$max': '$total_countries'},
-                'total_stops': {'$max': '$total_stops'},
-                'total_duration': {'$max': '$total_duration'},
-                'total_cost_pp': {'$sum': '$stats.total_cost_pp'},
-                'total_cost_pp_pn': {'$sum': '$stats.total_cost_pp_pn'},
-                'total_accom_pp': {'$sum': '$stats.total_accom_pp'},
-                'total_food_pp': {'$sum': '$stats.total_food_pp'},
-                'total_other_pp': {'$sum': '$stats.total_other_pp'}
-            }
-        },
-        {
-            '$lookup':
-            {
-                'from': 'trips',
-                'let': {'trip_id': '$_id'},  # this becomes $$trip_id
-                'pipeline': [{
-                    '$match': {
-                        '$expr': {
-                            '$eq': ['$$trip_id', '$_id']
-                        }
-                    }
-                }],
-                'as': 'trips'
-            }
-        },
-        {
-            '$unwind': {
-                'path': '$trips'
-            }
-        },
-        {
-            '$project': {
-                '_id': 1,
-                'name': '$trips.name',
-                'start_date': '$trips.start_date',
-                'end_date': '$trips.end_date',
-                'owner_id': '$trips.owner_id',
-                'public': '$trips.public',
-                'travelers': '$trips.travelers',
-                'owner_id': '$trips.owner_id',
-                'total_duration': '$total_duration',
-                'total_stops': '$total_stops',
-                'total_countries': '$total_countries',
-                'total_cost': {
-                    '$multiply': ['$trips.travelers', '$total_cost_pp']
-                },
-                'total_cost_pp': '$total_cost_pp',
-                'total_accom_pp': '$total_accom_pp',
-                'total_food_pp': '$total_food_pp',
-                'total_other_pp': '$total_other_pp',
-                'avg_cost_pn': {
-                    '$divide': [{'$multiply': ['$trips.travelers', '$total_cost_pp']}, '$total_duration']
-                },
-                'total_accom': {
-                    '$multiply': ['$trips.travelers', '$total_accom_pp']
-                },
-                'total_food': {
-                    '$multiply': ['$trips.travelers', '$total_food_pp']
-                },
-                'total_other': {
-                    '$multiply': ['$trips.travelers', '$total_other_pp']
-                },
-            }
-        }
-    ]
-
-    # aggregrate returns a cursor - need to convert to list to access
-    # query will only return 1 result, which is stored at index 0 hence [0]
-    trip_detail = list(stops.aggregate(trip_pipeline))[0]
 
     # create array to contain all stops detail - produced via aggregate
     # then loop through cursor, creating new array which is passed to the
@@ -553,21 +413,34 @@ def trip_detailed(trip_id):
 
     cursor = trips.aggregate(stop_pipeline)
 
+    # set variables needed
     last_trip_id = ''
-    # last_trip_start_date = ''
-    # last_stop_start_date = ''
-    # last_stop_end_date = ''
-    # stop_total_accom = 0
-    # stop_total_food = 0
-    # stop_total_other = 0
-    # stop_total_accom_pp = 0
-    # stop_total_food_pp = 0
-    # stop_total_other_pp = 0
+    last_stop_end_date = ''
+    trip_total_cost = 0
+    trip_total_accom = 0
+    trip_total_food = 0
+    trip_total_other = 0
+    trip_total_cost_pp = 0
+    trip_total_accom_pp = 0
+    trip_total_food_pp = 0
+    trip_total_other_pp = 0
+    trip_avg_cost_pn = 0
+    trip_stops = 0
+    trip_duration = 0
+    trip_countries = 0
 
-    stops_arr = []
+    trip_owner = ''
+    trip_name = ''
+    country_list = ''
+    last_country = ''
+
+    stops_detail = []
 
     for doc in cursor:
+        # variables used early in the process
         stop_duration = doc['stops']['duration']
+        stop_country = doc['stops']['country']
+
         trip_travelers = doc['travelers']
 
         # costs per person for the stop
@@ -587,6 +460,27 @@ def trip_detailed(trip_id):
             last_stop_end_date = last_stop_start_date + \
                 timedelta(days=stop_duration)
 
+            # cumulative totals
+            trip_total_accom += stop_total_accom
+            trip_total_food += stop_total_food
+            trip_total_other += stop_total_other
+
+            trip_total_cost += trip_total_accom + trip_total_food + trip_total_other
+
+            trip_total_accom_pp += stop_total_accom_pp
+            trip_total_food_pp += stop_total_food_pp
+            trip_total_other_pp += stop_total_other_pp
+
+            if not last_country == stop_country:
+                # increase counter if country has changed
+                trip_countries += 1
+
+                country_list = country_list + ' - ' + stop_country
+
+            # counters
+            trip_stops += 1
+            trip_duration += stop_duration
+
         else:
             # new trip, new stop - reset
             last_trip_start_date = doc['start_date']
@@ -594,14 +488,38 @@ def trip_detailed(trip_id):
             last_stop_end_date = last_trip_start_date + \
                 timedelta(days=stop_duration)
 
-        last_trip_id = doc['_id']
+            # reset trip totals
+            trip_total_accom = stop_total_accom
+            trip_total_food = stop_total_food
+            trip_total_other = stop_total_other
 
-        data = {
+            trip_total_cost = trip_total_accom + trip_total_food + trip_total_other
+
+            trip_total_accom_pp = stop_total_accom_pp
+            trip_total_food_pp = stop_total_food_pp
+            trip_total_other_pp = stop_total_other_pp
+
+            # for trip overview
+            trip_owner = doc['owner_id']
+            trip_name = doc['name']
+            trip_start_date = doc['start_date']
+            trip_end_date = doc['end_date']
+
+            # counters
+            trip_stops = 1
+            trip_countries = 1
+            trip_duration = stop_duration
+
+        # outside loop
+        last_trip_id = doc['_id']
+        last_country = stop_country
+
+        arr = {
             'trip_id': last_trip_id,
             'stop_id': doc['stops']['_id'],
             'duration': stop_duration,
             'travelers': trip_travelers,
-            'country': doc['stops']['country'],
+            'country': stop_country,
             'city_town': doc['stops']['city_town'],
             'currency': doc['stops']['currency'],
 
@@ -617,15 +535,35 @@ def trip_detailed(trip_id):
             'stop_total_other': stop_total_other
         }
 
-        stops_arr.append(data)
+        stops_detail.append(arr)
 
-    # stop_detail = stops.find({'trip_id': ObjectId(trip_id)})
+    # now that all stop costs have been aggregated into variables,
+    # i can now calculate the avg cost
+    trip_avg_cost_pn = trip_total_cost / trip_duration
+
+    # create trip information dict
+    trip_detail = {
+        '_id': last_trip_id,
+        'owner_id': trip_owner,
+        'name': trip_name,
+        'start_date': trip_start_date,
+        'end_date': trip_end_date,
+        'travelers': trip_travelers,
+        'total_duration': trip_duration,
+        'trip_total_cost': trip_total_cost,
+        'avg_cost_pn': trip_avg_cost_pn,
+        'total_stops': trip_stops,
+        'total_countries': trip_countries,
+        'total_accom_pp': trip_total_accom_pp,
+        'total_food_pp': trip_total_food_pp,
+        'total_other_pp': trip_total_other_pp,
+        'total_accom': trip_total_accom,
+        'total_food': trip_total_food,
+        'total_other': trip_total_other,
+    }
 
     return render_template('trip_detailed.html', trip=trip_detail,
-                           stops=stops_arr)
-    # return render_template('trip_detailed.html',
-    #                        trip=trips.find_one(trip_query),
-    #                        stops=stops.find(stop_query))
+                           stops=stops_detail)
 
 #
 # stops functionality
