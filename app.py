@@ -551,12 +551,10 @@ def trip_detailed(trip_id):
         stop_total_food = trip_travelers * stop_total_food_pp
         stop_total_other = trip_travelers * stop_total_other_pp
 
-        last_stop_start_date = last_trip_start_date
-
         if last_trip_id != doc['_id']:
             # new trip, new stop - reset
             last_trip_start_date = doc['start_date']
-
+            last_stop_start_date = last_trip_start_date
             last_stop_end_date = last_trip_start_date + \
                 timedelta(days=stop_duration)
 
