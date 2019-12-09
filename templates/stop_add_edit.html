@@ -16,6 +16,8 @@
 		<div class="col s12">
 			<form method="POST" novalidate>
 				{{ form.hidden_tag() }}
+				{{ form.total_trip_duration() }}
+				{{ form.current_stop_duration() }}
 				<div class="row">
 					<div class="input-field col s12 l6">
 						{{ form.trip_name.label }}
@@ -26,8 +28,8 @@
 						{{ form.trip_start_date(readonly=true) }}
 					</div>
 					<div class="input-field col s12 m6 l3">
-						{{ form.trip_end_date.label }}
-						{{ form.trip_end_date(readonly=true) }}
+						{{ form.proj_end_date.label }}
+						{{ form.proj_end_date(readonly=true, value=" ") }}
 					</div>
 				</div>
 				<div class="row">
@@ -96,3 +98,55 @@
 	</div>
 </section>
 {%- endblock -%}
+
+{% block js %}
+<!-- code to update projected end date -->
+<script>
+	const startDate = $('#trip_start_date').val();
+	
+    /* get duration values */
+    const currentDuration = Number($('#current_stop_duration').val());
+    const totalDuration = Number($('#total_trip_duration').val());
+    
+    /* store duration field element in variable */
+    const newDuration = $('#duration');
+    
+	function setEndDate() {
+        const date = new Date(startDate);
+        let newDurationVal = Number(newDuration.val());
+
+        /* values of < 1 are not permitted */
+        if (newDurationVal < 1) {
+            newDurationVal = 1;
+            newDuration.val(newDurationVal);
+            alert("Duration must be one or more")
+        }
+
+        /* get the difference between the stop duration before it was updated and the current value */
+        const changeInDuration = newDurationVal - currentDuration;
+
+        /* take the duration difference (which can be +ve or -ve) and add to trip total duration */
+        const durationAdjustment = totalDuration + changeInDuration;
+
+        /* use setDate to update the end date by adding the number of days for duration to the trip start date */
+        date.setDate(date.getDate() + durationAdjustment);
+        
+        /* format date to DD MMM YYYY */
+        const splitDate = date.toDateString().split(' ');
+        const formattedDate = `${splitDate[2]} ${splitDate[1]} ${splitDate[3]}`;
+        
+        /*update the html element to show the new projected end date */
+        return $('#proj_end_date').val(formattedDate);
+    }
+
+    $( document ).ready(() => {
+        /* update form field with end date based on projection */
+        setEndDate();       
+    });
+	
+	newDuration.on('change', function() {
+        /* update form field with end date based on projection */
+        setEndDate();
+    });
+</script>
+{% endblock %}
