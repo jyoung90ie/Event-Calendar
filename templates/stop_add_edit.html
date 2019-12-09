@@ -58,7 +58,7 @@
 					</div>
 					<div class="input-field col s12 m6 l4">
 						{{ form.duration.label }}
-						{{ form.duration() }}
+						{{ form.duration(value="1") }}
 						{%- for error in form.duration.errors %}
 						<span class="error">{{ error }}</span>
 						{% endfor -%}
