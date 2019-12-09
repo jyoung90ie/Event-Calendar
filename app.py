@@ -341,7 +341,7 @@ def trip_new():
         # create new entry if validation is successful
         try:
             newTrip = {
-                'name': form.name.data,
+                'name': form.name.data.strip().title(),
                 'travelers': form.travelers.data,
                 'start_date': form.start_date.data,
                 'end_date': '',
@@ -389,7 +389,7 @@ def trip_update(trip_id):
                 }
                 updateQuery = {
                     '$set': {
-                        'name': form.name.data,
+                        'name': form.name.data.strip().title(),
                         'travelers': form.travelers.data,
                         'start_date': form.start_date.data,
                         'end_date': '',
@@ -403,7 +403,7 @@ def trip_update(trip_id):
                 return redirect(url_for('trip_detailed', trip_id=trip_id))
             except Exception as e:
                 print(e)
-                flash('Database insertion error - please try again')
+                flash('Database update error - please try again')
 
             # if form did not successful validate or there was an exception
             # error then redirect back to front page
@@ -590,8 +590,6 @@ def trip_detailed(trip_id):
             trip_total_food_pp += stop_total_food_pp
             trip_total_other_pp += stop_total_other_pp
 
-            
-
             if not last_country == stop_country:
                 # increase counter if country has changed
                 trip_countries += 1
@@ -632,12 +630,14 @@ def trip_detailed(trip_id):
         # outside loop
         last_trip_id = doc['_id']
         last_country = stop_country
-        
+
         trip_total_cost = trip_total_accom + trip_total_food + trip_total_other
-        trip_total_cost_pp = trip_total_accom_pp + trip_total_food_pp + trip_total_other_pp
+        trip_total_cost_pp = trip_total_accom_pp + \
+            trip_total_food_pp + trip_total_other_pp
 
         stop_total_cost = stop_total_accom + stop_total_food + stop_total_other
-        stop_total_cost_pp = stop_total_accom_pp + stop_total_food_pp + stop_total_other_pp
+        stop_total_cost_pp = stop_total_accom_pp + \
+            stop_total_food_pp + stop_total_other_pp
 
         arr = {
             'trip_id': last_trip_id,
@@ -723,11 +723,11 @@ def trip_stop_new(trip_id):
             try:
                 newStop = {
                     'trip_id': ObjectId(trip_id),
-                    'country': form.country.data,
-                    'city_town': form.city_town.data,
+                    'country': form.country.data.strip().title(),
+                    'city_town': form.city_town.data.strip().title(),
                     'duration': form.duration.data,
                     'order': 1,
-                    'currency': form.currency.data,
+                    'currency': form.currency.data.strip().upper(),
                     'cost_accommodation': float(form.cost_accommodation.data),
                     'cost_food': float(form.cost_food.data),
                     'cost_other': float(form.cost_other.data)
@@ -820,11 +820,11 @@ def trip_stop_update(trip_id, stop_id):
                 updateQuery = {
                     '$set': {
                         'trip_id': ObjectId(trip_id),
-                        'country': form.country.data,
-                        'city_town': form.city_town.data,
+                        'country': form.country.data.strip().title(),
+                        'city_town': form.city_town.data.strip().title(),
                         'duration': form.duration.data,
                         'order': 1,
-                        'currency': form.currency.data,
+                        'currency': form.currency.data.strip().upper(),
                         'cost_accommodation':
                             float(form.cost_accommodation.data),
                         'cost_food': float(form.cost_food.data),
@@ -923,10 +923,10 @@ def user_new():
         try:
             # create new entry if validation is successful
             newUser = {
-                'username': form.username.data,
-                'name': form.name.data,
-                'display_name': form.display_name.data,
-                'email': form.email.data,
+                'username': form.username.data.strip().lower(),
+                'name': form.name.data.strip().title(),
+                'display_name': form.display_name.data.strip(),
+                'email': form.email.data.strip().lower(),
                 'password': ''
             }
             users.insert_one(newUser)
