@@ -1,12 +1,12 @@
+''' This sets out the structure and validation for each input form used '''
 from datetime import datetime, timedelta
+from wtforms import StringField, BooleanField, \
+    IntegerField, DateTimeField, DecimalField, HiddenField
 from wtforms.validators import DataRequired, NumberRange, Email, Length, \
     ValidationError, InputRequired
 from flask_wtf import FlaskForm
-from wtforms import StringField, BooleanField, SubmitField, \
-    IntegerField, DateTimeField, DecimalField, FloatField, HiddenField
-
 # import db connection and collection variables
-from db import trips, users, stops
+from db import USERS
 
 # Custom validation functions
 
@@ -20,7 +20,7 @@ def user_exists(for_login=False):
     when logging in.
     '''
     def _user_exists(form, field):
-        username = users.find_one({"username": field.data})
+        username = USERS.find_one({"username": field.data})
 
         if for_login:
             if not username:
@@ -62,7 +62,7 @@ def check_duration():
         trip_duration = (form.trip_end_date.data -
                          form.trip_start_date.data)
 
-        if type(field.data) == int:
+        if isinstance(field.data, int):
             if field.data > trip_duration.days:
                 raise ValidationError(message)
 
@@ -71,21 +71,26 @@ def check_duration():
 
 # Form setup
 class RegistrationForm(FlaskForm):
-    username = StringField('Username', validators=[
-                           DataRequired(), Length(min=3, max=32),
-                           user_exists()])
+    ''' Fields and validation for User Registration '''
+    username = StringField('Username',
+                           validators=[DataRequired(), Length(min=3, max=32),
+                                       user_exists()])
     name = StringField('Full Name', validators=[DataRequired(), Length(min=2)])
-    display_name = StringField('Display Name', validators=[
-                               DataRequired(), Length(min=2, max=32)])
+    display_name = StringField('Display Name',
+                               validators=[DataRequired(),
+                                           Length(min=2, max=32)])
     email = StringField('Email', validators=[DataRequired(), Email()])
 
 
 class LoginForm(FlaskForm):
-    username = StringField('Username', validators=[
-                           DataRequired(), user_exists(for_login=True)])
+    ''' Fields and validation for User Login '''
+    username = StringField('Username',
+                           validators=[DataRequired(),
+                                       user_exists(for_login=True)])
 
 
 class TripForm(FlaskForm):
+    ''' Fields and validation for Adding and Updating a Trip '''
     default_start = datetime.now()
     default_end = default_start + timedelta(days=1)
 
@@ -98,6 +103,7 @@ class TripForm(FlaskForm):
 
 
 class StopForm(FlaskForm):
+    ''' Fields and validation for Adding and Updating a Stop '''
     trip_name = StringField('Trip Name')
     total_trip_duration = HiddenField('Total Trip Duration')
     current_stop_duration = HiddenField('Current Stop Duration')
