@@ -3,7 +3,7 @@ from wtforms.validators import DataRequired, NumberRange, Email, Length, \
     ValidationError, InputRequired
 from flask_wtf import FlaskForm
 from wtforms import StringField, BooleanField, SubmitField, \
-    IntegerField, DateTimeField, DecimalField, FloatField
+    IntegerField, DateTimeField, DecimalField, FloatField, HiddenField
 
 # import db connection and collection variables
 from db import trips, users, stops
@@ -94,17 +94,15 @@ class TripForm(FlaskForm):
                              validators=[InputRequired(), NumberRange(min=1)])
     start_date = DateTimeField('Start Date', default=default_start, validators=[
         InputRequired()], format='%d %b %Y')
-
-    end_date = DateTimeField('End Date', default=default_end, validators=[
-        InputRequired(), check_dates('start_date')],
-        format='%d %b %Y')
     public = BooleanField('Display Trip to Public?', default='checked')
 
 
 class StopForm(FlaskForm):
     trip_name = StringField('Trip Name')
+    total_trip_duration = HiddenField('Total Trip Duration')
+    current_stop_duration = HiddenField('Current Stop Duration')
     trip_start_date = DateTimeField('Trip Start Date', format='%d %b %Y')
-    trip_end_date = DateTimeField('Trip End Date', format='%d %b %Y')
+    proj_end_date = DateTimeField('Projected Trip End Date', format='%d %b %Y')
     country = StringField('Country', validators=[DataRequired()])
     city_town = StringField('City/Town', validators=[DataRequired()])
     currency = StringField('Currency',
@@ -113,8 +111,7 @@ class StopForm(FlaskForm):
                                               message=('Currency must be 3 '
                                                        'characters long.'))])
     duration = IntegerField('Duration',
-                            validators=[InputRequired(), NumberRange(min=1),
-                                        check_duration()])
+                            validators=[InputRequired(), NumberRange(min=1)])
     cost_accommodation = DecimalField('Accommodation (Cost)', places=2,
                                       validators=[InputRequired(),
                                                   NumberRange(min=0)])
