@@ -240,8 +240,8 @@ def show_trips(show='all'):
         },
         {
             u"$project": {
-                u"number_of_stops": 1.0,
-                u"duration": 1.0,
+                u"number_of_stops": 1,
+                u"duration": 1,
                 u"total_cost": {
                     u"$multiply": [
                         u"$travelers",
@@ -254,16 +254,16 @@ def show_trips(show='all'):
                         }
                     ]
                 },
-                u"start_date": 1.0,
+                u"start_date": 1,
                 u"end_date": {
                     u"$add": [
                         u"$start_date",
                         {
                             u"$multiply": [
                                 u"$duration",
-                                24.0,
-                                3600.0,
-                                1000.0
+                                24,
+                                3600,
+                                1000
                             ]
                         }
                     ]
@@ -282,7 +282,7 @@ def show_trips(show='all'):
                                                 u"$$this"
                                             ]
                                         },
-                                        0.0
+                                        0
                                     ]
                                 },
                                 u"then": {
@@ -301,11 +301,11 @@ def show_trips(show='all'):
                         }
                     }
                 },
-                u"name": 1.0,
-                u"travelers": 1.0,
+                u"name": 1,
+                u"travelers": 1,
                 u"username": u"$display_name",
-                u"public": 1.0,
-                u"owner_id": 1.0
+                u"public": 1,
+                u"owner_id": 1
             }
         },
         {
@@ -586,12 +586,11 @@ def trip_detailed(trip_id):
             trip_total_food += stop_total_food
             trip_total_other += stop_total_other
 
-            trip_total_cost += trip_total_accom + trip_total_food + \
-                trip_total_other
-
             trip_total_accom_pp += stop_total_accom_pp
             trip_total_food_pp += stop_total_food_pp
             trip_total_other_pp += stop_total_other_pp
+
+            
 
             if not last_country == stop_country:
                 # increase counter if country has changed
@@ -615,9 +614,6 @@ def trip_detailed(trip_id):
             trip_total_food = stop_total_food
             trip_total_other = stop_total_other
 
-            trip_total_cost = trip_total_accom + trip_total_food + \
-                trip_total_other
-
             trip_total_accom_pp = stop_total_accom_pp
             trip_total_food_pp = stop_total_food_pp
             trip_total_other_pp = stop_total_other_pp
@@ -636,6 +632,12 @@ def trip_detailed(trip_id):
         # outside loop
         last_trip_id = doc['_id']
         last_country = stop_country
+        
+        trip_total_cost = trip_total_accom + trip_total_food + trip_total_other
+        trip_total_cost_pp = trip_total_accom_pp + trip_total_food_pp + trip_total_other_pp
+
+        stop_total_cost = stop_total_accom + stop_total_food + stop_total_other
+        stop_total_cost_pp = stop_total_accom_pp + stop_total_food_pp + stop_total_other_pp
 
         arr = {
             'trip_id': last_trip_id,
@@ -649,10 +651,12 @@ def trip_detailed(trip_id):
             'stop_start_date': last_stop_start_date,
             'stop_end_date': last_stop_end_date,
 
+            'stop_total_cost_pp': stop_total_cost_pp,
             'stop_total_accom_pp': stop_total_accom_pp,
             'stop_total_food_pp': stop_total_food_pp,
             'stop_total_other_pp': stop_total_other_pp,
 
+            'stop_total_cost': stop_total_cost,
             'stop_total_accom': stop_total_accom,
             'stop_total_food': stop_total_food,
             'stop_total_other': stop_total_other
@@ -674,10 +678,11 @@ def trip_detailed(trip_id):
             'end_date': trip_end_date,
             'travelers': trip_travelers,
             'total_duration': trip_duration,
-            'trip_total_cost': trip_total_cost,
             'avg_cost_pn': trip_avg_cost_pn,
             'total_stops': trip_stops,
             'total_countries': trip_countries,
+            'trip_total_cost': trip_total_cost,
+            'trip_total_cost_pp': trip_total_cost_pp,
             'total_accom_pp': trip_total_accom_pp,
             'total_food_pp': trip_total_food_pp,
             'total_other_pp': trip_total_other_pp,
