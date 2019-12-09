@@ -1,19 +1,20 @@
-from flask_pymongo import PyMongo
-from dotenv import load_dotenv
+''' This creates a connection to MongoDB and creates collection variables '''
 import os
 from flask import Flask
+from flask_pymongo import PyMongo
+from dotenv import load_dotenv
 
 # get environment variables
 load_dotenv()
 
-app = Flask(__name__)
-app.config['MONGO_URI'] = os.getenv('MONGODB_URI')
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+APP = Flask(__name__)
+APP.config['MONGO_URI'] = os.getenv('MONGODB_URI')
+APP.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 
 # initialise mongoDb
-mongo = PyMongo(app)
+MONGO = PyMongo(APP)
 
 # set collections variables
-users = mongo.db.users
-trips = mongo.db.trips
-stops = mongo.db.stops
+USERS = MONGO.db.users
+TRIPS = MONGO.db.trips
+STOPS = MONGO.db.stops
