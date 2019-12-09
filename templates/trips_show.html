@@ -26,8 +26,8 @@
             </div>
 				<div class="card-content">
 					<span class="card-title activator grey-text text-darken-4">
-                    <i class="material-icons">unfold_more</i>{{ trip['name'] }}
-                </span>
+                        <i class="material-icons">unfold_more</i>{{ trip['name'] }} 
+                    </span>
 					<p>{{ trip['start_date'].day }} {{ trip['start_date'].strftime('%b') }}
 						{{ trip['start_date'].year }} - {{ trip['end_date'].day }} {{ trip['end_date'].strftime('%b') }}
 						{{ trip['end_date'].year }}</p>
@@ -47,33 +47,49 @@
 				</div>
 				<div class="card-reveal">
 					<div class="card-content">
-						<span class="card-title grey-text text-darken-4">
+						<span class="card-title">
                         <i class="material-icons">unfold_less</i>{{- trip['name'] }}
                     </span>
 						<div class="row">
-							<div class="col s6">Number of Travelers:</div>
-							<div class="col s6">{{ trip['travelers'] }}</div>
-
-							<div class="col s6">Country:</div>
-							<div class="col s6">{{ trip['country'] if trip['country'] else 'N/A - no stops added' }}
+							<div class="col s6 m4">Number of Travelers:</div>
+							<div class="col s6 m8">{{ trip['travelers'] }}</div>
+						</div>
+						<div class="row">
+							<div class="col s6 m4">Countries:</div>
+							<div class="col s6 m8">
+								{{ trip['countries'] if trip['countries']  else 'N/A - no stops added' }}
 							</div>
-
-							<div class="col s6">Duration (nights):</div>
-							<div class="col s6">{{ trip['duration'] if trip['duration'] else 'N/A - no stops added' }}
+						</div>
+						<div class="row">
+							<div class="col s6 m4">Dates:</div>
+							<div class="col s6 m8">
+								{{ trip['start_date'].day }} {{ trip['start_date'].strftime('%b') }}
+								{{ trip['start_date'].year }} - {{ trip['end_date'].day }}
+								{{ trip['end_date'].strftime('%b') }}
+								{{ trip['end_date'].year }}
 							</div>
-
-							<div class="col s6">Number of Stops:</div>
-							<div class="col s6">
+						</div>
+						<div class="row">
+							<div class="col s6 m4">Duration (nights):</div>
+							<div class="col s6 m8">
+								{{ trip['duration'] if trip['duration'] else 'N/A - no stops added' }}
+							</div>
+						</div>
+						<div class="row">
+							<div class="col s6 m4">Number of Stops:</div>
+							<div class="col s6 m8">
 								{{ trip['number_of_stops'] if trip['number_of_stops'] else 'N/A - no stops added' }}
 							</div>
-
-							<div class="col s6">Total Cost:</div>
-							<div class="col s6">
+						</div>
+						<div class="row">
+							<div class="col s6 m4">Total Cost:</div>
+							<div class="col s6 m8">
 								{{ "%.2f" | format(trip['total_cost']) if trip['total_cost'] else 'N/A - no stops added' }}
 							</div>
-
-							<div class="col s6">Creator:</div>
-							<div class="col s6">{{ trip['display_name'][0] }}</div>
+						</div>
+						<div class="row">
+							<div class="col s6 m4">Creator:</div>
+							<div class="col s6 m8">{{ trip['username'] }}</div>
 						</div>
 					</div>
 				</div>
