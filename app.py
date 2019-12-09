@@ -72,6 +72,40 @@ def checkUserPermission(checkLogin=True, checkTripOwner=False,
     # Stop belongs to Trip - and User owns Trip
     return True
 
+
+def getTripDuration(trip_id):
+    pipeline = [
+        {
+            u"$match": {
+                u"trip_id": ObjectId(trip_id)
+            }
+        },
+        {
+            u"$group": {
+                u"_id": u"$trip_id",
+                u"total_duration": {
+                    u"$sum": u"$duration"
+                }
+            }
+        },
+        {
+            u"$project": {
+                u"total_duration": 1
+            }
+        }
+    ]
+
+    try:
+        # set total trip duration if query is successful
+        get_total_duration = stops.aggregate(pipeline)
+
+        total_duration = get_total_duration.next()['total_duration']
+    except:
+        # otherwise set to zero
+        total_duration = 0
+
+    return total_duration
+
 #
 # trips functionality
 #
@@ -96,14 +130,14 @@ def show_trips(show='all'):
 
         # if user is logged in, show only their trips (i.e. route is
         # /trips/user)
-        queryFilter = {
+        pipeline_filter = {
             "$match": {
                 "$or":
                     [{"owner_id": user_id}]
             }
         }
     else:
-        queryFilter = {
+        pipeline_filter = {
             "$match": {
                 "$or":
                     [{"owner_id": user_id},
@@ -112,104 +146,182 @@ def show_trips(show='all'):
         }
     # pass through the trips collection, using .find() to return all contents
     # of collection enabling iteration
-    agg = [
-        queryFilter,
-        {"$lookup": {"from": "stops", "localField": "_id",
-                     "foreignField": "trip_id", "as": "stops"}
-         },
-        {"$lookup": {"from": "users", "localField": "owner_id",
-                     "foreignField": "_id", "as": "users"}
-         },
+    pipeline = [
+        pipeline_filter,
         {
-            "$unwind": {
-                "path": "$stops",
-                "preserveNullAndEmptyArrays": True
+            u"$lookup": {
+                u"from": u"stops",
+                u"localField": u"_id",
+                u"foreignField": u"trip_id",
+                u"as": u"stops"
             }
         },
         {
-            "$group": {
-                "_id": "$_id",
-                "number_of_stops": {
-                    "$sum": {
-                        "$cond": {
-
-                            "if": {"$gt": ["$stops.trip_id", "null"]},
-                            "then": 1, "else": 0}
+            u"$lookup": {
+                u"from": u"users",
+                u"localField": u"owner_id",
+                u"foreignField": u"_id",
+                u"as": u"users"
+            }
+        },
+        {
+            u"$unwind": {
+                u"path": u"$stops",
+                u"includeArrayIndex": u"arrayIndex",
+                u"preserveNullAndEmptyArrays": True
+            }
+        },
+        {
+            u"$group": {
+                u"_id": u"$_id",
+                u"number_of_stops": {
+                    u"$sum": {
+                        u"$cond": {
+                            u"if": {
+                                u"$gt": [
+                                    u"$stops.trip_id",
+                                    u"null"
+                                ]
+                            },
+                            u"then": 1.0,
+                            u"else": 0.0
+                        }
                     }
                 },
-                "duration": {"$sum": "$stops.duration"},
-                "total_accommodation": {
-                    "$sum": {
-                        "$multiply": ["$stops.duration",
-                                      "$stops.cost_accommodation"]
+                u"duration": {
+                    u"$sum": u"$stops.duration"
+                },
+                u"total_accommodation": {
+                    u"$sum": {
+                        u"$multiply": [
+                            u"$stops.duration",
+                            u"$stops.cost_accommodation"
+                        ]
                     }
                 },
-                "total_food": {
-                    "$sum": {
-                        "$multiply": ["$stops.duration", "$stops.cost_food"]
+                u"total_food": {
+                    u"$sum": {
+                        u"$multiply": [
+                            u"$stops.duration",
+                            u"$stops.cost_food"
+                        ]
                     }
                 },
-                "total_other": {
-                    "$sum": {
-                        "$multiply": ["$stops.duration", "$stops.cost_other"]
+                u"total_other": {
+                    u"$sum": {
+                        u"$multiply": [
+                            u"$stops.duration",
+                            u"$stops.cost_other"
+                        ]
                     }
                 },
-                "start_date": {
-                    "$min": "$start_date"
+                u"start_date": {
+                    u"$min": u"$start_date"
                 },
-                "end_date": {
-                    "$max": "$end_date"
+                u"country": {
+                    u"$push": u"$stops.country"
                 },
-                "country": {
-                    "$first": "$stops.country"
+                u"name": {
+                    u"$first": u"$name"
                 },
-                "name": {
-                    "$first": "$name"
+                u"travelers": {
+                    u"$max": u"$travelers"
                 },
-                "travelers": {
-                    "$max": "$travelers"
+                u"owner_id": {
+                    u"$first": u"$owner_id"
                 },
-                "owner_id": {
-                    "$first": "$owner_id"
+                u"public": {
+                    u"$min": u"$public"
                 },
-                "public": {
-                    "$min": "$public"
-                },
-                "display_name": {
-                    "$first": "$users.display_name"
+                u"display_name": {
+                    u"$first": u"$users.display_name"
                 }
             }
         },
         {
-            "$project": {
-                "start_date": True,
-                "end_date": True,
-                "display_name": True,
-                "name": True,
-                "travelers": True,
-                "public": True,
-                "owner_id": True,
-                "country": True,
-                "number_of_stops": True,
-                "duration": True,
-                "total_accommodation": True,
-                "total_food": True,
-                "total_other": True,
-                "total_cost": {"$multiply":
-                               ["$travelers",
-                                {"$add": ["$total_accommodation", "$total_food",
-                                          "$total_other"]}]}
+            u"$project": {
+                u"number_of_stops": 1.0,
+                u"duration": 1.0,
+                u"total_cost": {
+                    u"$multiply": [
+                        u"$travelers",
+                        {
+                            u"$add": [
+                                u"$total_accommodation",
+                                u"$total_food",
+                                u"$total_other"
+                            ]
+                        }
+                    ]
+                },
+                u"start_date": 1.0,
+                u"end_date": {
+                    u"$add": [
+                        u"$start_date",
+                        {
+                            u"$multiply": [
+                                u"$duration",
+                                24.0,
+                                3600.0,
+                                1000.0
+                            ]
+                        }
+                    ]
+                },
+                u"countries": {
+                    u"$reduce": {
+                        u"input": u"$country",
+                        u"initialValue": u"",
+                        u"in": {
+                            u"$cond": {
+                                u"if": {
+                                    u"$eq": [
+                                        {
+                                            u"$indexOfArray": [
+                                                u"$country",
+                                                u"$$this"
+                                            ]
+                                        },
+                                        0.0
+                                    ]
+                                },
+                                u"then": {
+                                    u"$concat": [
+                                        u"$$this"
+                                    ]
+                                },
+                                u"else": {
+                                    u"$concat": [
+                                        u"$$value",
+                                        u", ",
+                                        u"$$this"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                u"name": 1.0,
+                u"travelers": 1.0,
+                u"username": u"$display_name",
+                u"public": 1.0,
+                u"owner_id": 1.0
             }
         },
         {
-            "$sort": {
+            u"$unwind": {
+                u"path": u"$username"
+            }
+        },
+        {
+            u"$sort": {
                 "start_date": 1,
                 "end_date": 1
             }
         }
     ]
 
-    getTrips = trips.aggregate(agg)
+    getTrips = trips.aggregate(pipeline)
 
     return render_template('trips_show.html', trips=getTrips,
                            user_id=user_id, trips_showing=show)
@@ -232,7 +344,7 @@ def trip_new():
                 'name': form.name.data,
                 'travelers': form.travelers.data,
                 'start_date': form.start_date.data,
-                'end_date': form.end_date.data,
+                'end_date': '',
                 'public': form.public.data,
                 'owner_id': ObjectId(session.get('USERNAME'))
             }
@@ -280,7 +392,7 @@ def trip_update(trip_id):
                         'name': form.name.data,
                         'travelers': form.travelers.data,
                         'start_date': form.start_date.data,
-                        'end_date': form.end_date.data,
+                        'end_date': '',
                         'public': form.public.data
                     }
                 }
@@ -436,7 +548,13 @@ def trip_detailed(trip_id):
 
     stops_detail = []
 
+    # results counter
+    results = 0
+
     for doc in cursor:
+        # there is a result, increment countere
+        results += 1
+
         # variables used early in the process
         stop_duration = doc['stops']['duration']
         stop_country = doc['stops']['country']
@@ -460,12 +578,16 @@ def trip_detailed(trip_id):
             last_stop_end_date = last_stop_start_date + \
                 timedelta(days=stop_duration)
 
+            # end date is max of current end date value and current stop end date
+            trip_end_date = max(trip_end_date, last_stop_end_date)
+
             # cumulative totals
             trip_total_accom += stop_total_accom
             trip_total_food += stop_total_food
             trip_total_other += stop_total_other
 
-            trip_total_cost += trip_total_accom + trip_total_food + trip_total_other
+            trip_total_cost += trip_total_accom + trip_total_food + \
+                trip_total_other
 
             trip_total_accom_pp += stop_total_accom_pp
             trip_total_food_pp += stop_total_food_pp
@@ -493,7 +615,8 @@ def trip_detailed(trip_id):
             trip_total_food = stop_total_food
             trip_total_other = stop_total_other
 
-            trip_total_cost = trip_total_accom + trip_total_food + trip_total_other
+            trip_total_cost = trip_total_accom + trip_total_food + \
+                trip_total_other
 
             trip_total_accom_pp = stop_total_accom_pp
             trip_total_food_pp = stop_total_food_pp
@@ -503,7 +626,7 @@ def trip_detailed(trip_id):
             trip_owner = doc['owner_id']
             trip_name = doc['name']
             trip_start_date = doc['start_date']
-            trip_end_date = doc['end_date']
+            trip_end_date = last_stop_end_date
 
             # counters
             trip_stops = 1
@@ -537,30 +660,34 @@ def trip_detailed(trip_id):
 
         stops_detail.append(arr)
 
-    # now that all stop costs have been aggregated into variables,
-    # i can now calculate the avg cost
-    trip_avg_cost_pn = trip_total_cost / trip_duration
+    if results > 0:
+        # if the query return results continue (i.e. there were stops)
 
-    # create trip information dict
-    trip_detail = {
-        '_id': last_trip_id,
-        'owner_id': trip_owner,
-        'name': trip_name,
-        'start_date': trip_start_date,
-        'end_date': trip_end_date,
-        'travelers': trip_travelers,
-        'total_duration': trip_duration,
-        'trip_total_cost': trip_total_cost,
-        'avg_cost_pn': trip_avg_cost_pn,
-        'total_stops': trip_stops,
-        'total_countries': trip_countries,
-        'total_accom_pp': trip_total_accom_pp,
-        'total_food_pp': trip_total_food_pp,
-        'total_other_pp': trip_total_other_pp,
-        'total_accom': trip_total_accom,
-        'total_food': trip_total_food,
-        'total_other': trip_total_other,
-    }
+        trip_avg_cost_pn = trip_total_cost / trip_duration
+
+        # create trip information dict
+        trip_detail = {
+            '_id': last_trip_id,
+            'owner_id': trip_owner,
+            'name': trip_name,
+            'start_date': trip_start_date,
+            'end_date': trip_end_date,
+            'travelers': trip_travelers,
+            'total_duration': trip_duration,
+            'trip_total_cost': trip_total_cost,
+            'avg_cost_pn': trip_avg_cost_pn,
+            'total_stops': trip_stops,
+            'total_countries': trip_countries,
+            'total_accom_pp': trip_total_accom_pp,
+            'total_food_pp': trip_total_food_pp,
+            'total_other_pp': trip_total_other_pp,
+            'total_accom': trip_total_accom,
+            'total_food': trip_total_food,
+            'total_other': trip_total_other,
+        }
+    else:
+        # if there were no results, need to run query
+        trip_detail = trips.find_one({"_id": ObjectId(trip_id)})
 
     return render_template('trip_detailed.html', trip=trip_detail,
                            stops=stops_detail)
@@ -620,6 +747,9 @@ def trip_stop_new(trip_id):
                         # limit to only those fields which are in the form and
                         # in the database
                         form[(prefix + field)].data = trip_query[field]
+
+            form.current_stop_duration.data = 0
+            form.total_trip_duration.data = getTripDuration(trip_id)
 
             return render_template('stop_add_edit.html', form=form,
                                    action='new', trip=trip_query)
@@ -727,6 +857,10 @@ def trip_stop_update(trip_id, stop_id):
                     # populate the form with values from query
                     if field in form:
                         form[field].data = stop_query[field]
+
+                # set hidden varialbes
+                form.total_trip_duration.data = getTripDuration(trip_id)
+                form.current_stop_duration.data = stop_query['duration']
 
                 return render_template('stop_add_edit.html', form=form,
                                        action='update', trip=trip_query,
