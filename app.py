@@ -1,15 +1,16 @@
-from bson.objectid import ObjectId
-from datetime import datetime, timedelta
+''' This file contains the main functionality and routing for the programme travelPal '''
+from datetime import timedelta
 import os
-from flask import Flask, render_template, request, url_for, redirect, \
-    make_response, jsonify, flash, session
+from bson.objectid import ObjectId
+from flask import render_template, url_for, redirect, \
+    flash, session
 # user created files
-from db import app, trips, users, stops
+from db import APP, TRIPS, USERS, STOPS
 from forms import RegistrationForm, TripForm, StopForm, LoginForm
 
 
-def checkUserPermission(checkLogin=True, checkTripOwner=False,
-                        checkStopOwner=False, trip_id='', stop_id=''):
+def check_user_permission(check_trip_owner=False,
+                          check_stop_owner=False, trip_id='', stop_id=''):
     '''
     This checks if a user has been logged in by default. Additional checks
     are included to determine if a user is the owner of a trip and thus
@@ -20,22 +21,22 @@ def checkUserPermission(checkLogin=True, checkTripOwner=False,
 
     # check that the variables needed to perform the db checks have been
     # passed through
-    if checkTripOwner and trip_id == '':
+    if check_trip_owner and trip_id == '':
         print('checkUserPermission(): Trip ID is required')
         return False
 
-    if checkStopOwner and (trip_id == '' or stop_id == ''):
+    if check_stop_owner and (trip_id == '' or stop_id == ''):
         print('checkUserPermission(): Trip ID and Stop ID are both required')
         return False
 
     # if checkTripOwner is True, OR, checkStopOwner is True - need to check
     # that User owns the Trip
-    if checkTripOwner or checkStopOwner:
+    if check_trip_owner or check_stop_owner:
         query = {'_id': ObjectId(trip_id),
                  'owner_id': ObjectId(session.get('USERNAME'))}
 
         # check user is the user that owns this trip
-        trip = trips.find_one(query)
+        trip = TRIPS.find_one(query)
 
         # check if any results were returned by the query - i.e. does this user
         # own this trip?
@@ -49,12 +50,12 @@ def checkUserPermission(checkLogin=True, checkTripOwner=False,
                 ' not have permission.')
             return False
 
-    if checkStopOwner:
+    if check_stop_owner:
         query = {'_id': ObjectId(stop_id), 'trip_id': ObjectId(trip_id)}
 
         # check that the Stop is part of the Trip and by association the User
         # owns this Stop
-        stop = stops.find_one(query)
+        stop = STOPS.find_one(query)
 
         # does the stop belong to the trip?
         if not stop:
@@ -67,13 +68,14 @@ def checkUserPermission(checkLogin=True, checkTripOwner=False,
             return False
 
     # User is Logged In
-    # PASSTHROUGH VARIABLE DEPENDENT
-    # User owns Trip
-    # Stop belongs to Trip - and User owns Trip
     return True
 
 
-def getTripDuration(trip_id):
+def get_trip_duration(trip_id):
+    '''
+    Creates an aggregate MongoDB query which returns the total duration
+    for all stops for a given trip_id.
+    '''
     pipeline = [
         {
             u"$match": {
@@ -97,11 +99,12 @@ def getTripDuration(trip_id):
 
     try:
         # set total trip duration if query is successful
-        get_total_duration = stops.aggregate(pipeline)
+        get_total_duration = STOPS.aggregate(pipeline)
 
         total_duration = get_total_duration.next()['total_duration']
-    except:
-        # otherwise set to zero
+    except Exception as ex:
+        # if query throws exception set total_duration to zero
+        print(ex)
         total_duration = 0
 
     return total_duration
@@ -109,23 +112,23 @@ def getTripDuration(trip_id):
 #
 # trips functionality
 #
-@app.route('/')
-@app.route('/trips/')
-@app.route('/trips/<show>/')
+@APP.route('/')
+@APP.route('/trips/')
+@APP.route('/trips/<show>/')
 def show_trips(show='all'):
     '''
     Shows a filtered list of trips from the DB - those marked as public and
     those the user owners (if logged in, otherwise just public trips displayed)
     '''
 
-    if checkUserPermission():
+    if check_user_permission():
         user_id = ObjectId(session.get('USERNAME'))
     else:
         user_id = ''
 
     if show == 'user':
         #  check if user logged in, if not redirect to all trips
-        if not checkUserPermission():
+        if not check_user_permission():
             return redirect(url_for('show_trips'))
 
         # if user is logged in, show only their trips (i.e. route is
@@ -321,17 +324,17 @@ def show_trips(show='all'):
         }
     ]
 
-    getTrips = trips.aggregate(pipeline)
+    get_trips = TRIPS.aggregate(pipeline)
 
-    return render_template('trips_show.html', trips=getTrips,
+    return render_template('trips_show.html', trips=get_trips,
                            user_id=user_id, trips_showing=show)
 
 
-@app.route('/trip/new/', methods=['POST', 'GET'])
+@APP.route('/trip/new/', methods=['POST', 'GET'])
 def trip_new():
     ''' This creates a new user in the database. '''
     # if the user is already logged in then redirect them
-    if not checkUserPermission(checkLogin=True):
+    if not check_user_permission():
         flash('Please login if you wish to perform this action')
         return redirect(url_for('show_trips'))
 
@@ -340,7 +343,7 @@ def trip_new():
     if form.validate_on_submit():
         # create new entry if validation is successful
         try:
-            newTrip = {
+            new_trip = {
                 'name': form.name.data.strip().title(),
                 'travelers': form.travelers.data,
                 'start_date': form.start_date.data,
@@ -348,35 +351,34 @@ def trip_new():
                 'public': form.public.data,
                 'owner_id': ObjectId(session.get('USERNAME'))
             }
-            trip = trips.insert_one(newTrip)
+            trip = TRIPS.insert_one(new_trip)
             flash('New trip has been created - you can add stops below')
 
             return redirect(url_for('trip_detailed',
                                     trip_id=trip.inserted_id))
-        except Exception as e:
-            print(e)
+        except Exception as ex:
+            print(ex)
             flash('Database insertion error - please try again')
 
         # if form did not successful validate or there was an exception
         # error then redirect back to front page
         return redirect(url_for('trip_new'))
-    else:
-        return render_template('trip_add_edit.html', form=form, action='new')
+    # form has not been submitted, show new trip form
+    return render_template('trip_add_edit.html', form=form, action='new')
 
 
-@app.route('/trip/<trip_id>/update/', methods=['POST', 'GET'])
+@APP.route('/trip/<trip_id>/update/', methods=['POST', 'GET'])
 def trip_update(trip_id):
     '''
     Subject to user permissions, this will display an input form with
     values retrieved from the database to facilitate update.
     '''
-    if not checkUserPermission():
+    if not check_user_permission():
         flash('Please login if you wish to perform this action')
         return redirect(url_for('show_trips'))
 
     # check that the user has permission to update this trip
-    trip = checkUserPermission(
-        checkLogin=True, checkTripOwner=True, trip_id=trip_id)
+    trip = check_user_permission(check_trip_owner=True, trip_id=trip_id)
 
     if trip:
         form = TripForm()
@@ -384,10 +386,10 @@ def trip_update(trip_id):
         if form.validate_on_submit():
             # create new entry if validation is successful
             try:
-                updateCriteria = {
+                update_criteria = {
                     '_id': ObjectId(trip_id)
                 }
-                updateQuery = {
+                update_query = {
                     '$set': {
                         'name': form.name.data.strip().title(),
                         'travelers': form.travelers.data,
@@ -397,65 +399,64 @@ def trip_update(trip_id):
                     }
                 }
 
-                trips.update_one(updateCriteria, updateQuery)
+                TRIPS.update_one(update_criteria, update_query)
 
                 flash('Your trip has been updated')
                 return redirect(url_for('trip_detailed', trip_id=trip_id))
-            except Exception as e:
-                print(e)
+            except Exception as ex:
+                print(ex)
                 flash('Database update error - please try again')
 
             # if form did not successful validate or there was an exception
             # error then redirect back to front page
             return redirect(url_for('trip_new'))
-        else:
-            trip_query = trips.find_one({'_id': ObjectId(trip_id)})
+        # form has not been submitted, show update form
+        trip_query = TRIPS.find_one({'_id': ObjectId(trip_id)})
 
-            if trip_query:
-                for field in trip_query:
-                    # populate the form with values from trip_query
-                    if field in form:
-                        # limit to only those fields which are in the form and
-                        # in the database
-                        form[field].data = trip_query[field]
+        if trip_query:
+            for field in trip_query:
+                # populate the form with values from trip_query
+                if field in form:
+                    # limit to only those fields which are in the form and
+                    # in the database
+                    form[field].data = trip_query[field]
 
-                return render_template('trip_add_edit.html', form=form,
-                                       action='update', trip=trip_query)
-            else:
-                flash('The trip you tried to access does not exist')
-                return redirect(url_for('show_trips'))
-    else:
-        # user does not own this trip, redirect to all trips
+            return render_template('trip_add_edit.html', form=form,
+                                   action='update', trip=trip_query)
+        # trip does not exist
+        flash('The trip you tried to access does not exist')
         return redirect(url_for('show_trips'))
 
+    # user does not own this trip, redirect to all trips
+    return redirect(url_for('show_trips'))
 
-@app.route('/trip/<trip_id>/delete/')
+
+@APP.route('/trip/<trip_id>/delete/')
 def trip_delete(trip_id):
     '''
     Subject to user permissions, this will delete a trip and all
     linked (via trip_id) stops.
     '''
-    if not checkUserPermission():
+    if not check_user_permission():
         flash('Please login if you wish to perform this action')
         return redirect(url_for('show_trips'))
 
     # check that the user has permission to update this trip
-    trip = checkUserPermission(
-        checkLogin=True, checkTripOwner=True, trip_id=trip_id)
+    trip = check_user_permission(check_trip_owner=True, trip_id=trip_id)
 
     if trip:
         # add query to delete all stops associated with this trip then delete
         # the trip
 
         # if user owns this entry then delete
-        tripQuery = {"_id": ObjectId(trip_id)}
-        stopsQuery = {"trip_id": ObjectId(trip_id)}
+        trip_query = {"_id": ObjectId(trip_id)}
+        stops_query = {"trip_id": ObjectId(trip_id)}
 
         flash(
             f'The trip and all associated stops have now been '
             'deleted')
-        trips.delete_one(tripQuery)
-        stops.delete_many(stopsQuery)
+        TRIPS.delete_one(trip_query)
+        STOPS.delete_many(stops_query)
 
     else:
         flash(
@@ -465,7 +466,7 @@ def trip_delete(trip_id):
     return redirect(url_for('show_trips', show='user'))
 
 
-@app.route('/trip/<trip_id>/detailed/')
+@APP.route('/trip/<trip_id>/detailed/')
 def trip_detailed(trip_id):
     '''
     This will display all trip information, including stops. If the user
@@ -476,7 +477,6 @@ def trip_detailed(trip_id):
     # create array to contain all stops detail - produced via aggregate
     # then loop through cursor, creating new array which is passed to the
     # template
-
     stop_pipeline = [
         {
             u"$match": {
@@ -523,30 +523,13 @@ def trip_detailed(trip_id):
         }
     ]
 
-    cursor = trips.aggregate(stop_pipeline)
+    cursor = TRIPS.aggregate(stop_pipeline)
 
     # set variables needed
     last_trip_id = ''
-    last_stop_end_date = ''
-    trip_total_cost = 0
-    trip_total_accom = 0
-    trip_total_food = 0
-    trip_total_other = 0
-    trip_total_cost_pp = 0
-    trip_total_accom_pp = 0
-    trip_total_food_pp = 0
-    trip_total_other_pp = 0
-    trip_avg_cost_pn = 0
-    trip_stops = 0
-    trip_duration = 0
-    trip_countries = 0
-
-    trip_owner = ''
-    trip_name = ''
-    country_list = ''
-    last_country = ''
 
     stops_detail = []
+    countries = []
 
     # results counter
     results = 0
@@ -554,56 +537,26 @@ def trip_detailed(trip_id):
     for doc in cursor:
         # there is a result, increment countere
         results += 1
-
         # variables used early in the process
         stop_duration = doc['stops']['duration']
         stop_country = doc['stops']['country']
-
         trip_travelers = doc['travelers']
-
         # costs per person for the stop
         stop_total_accom_pp = stop_duration * \
             doc['stops']['cost_accommodation']
         stop_total_food_pp = stop_duration * doc['stops']['cost_food']
         stop_total_other_pp = stop_duration * doc['stops']['cost_other']
-
         # total cost for stop
         stop_total_accom = trip_travelers * stop_total_accom_pp
         stop_total_food = trip_travelers * stop_total_food_pp
         stop_total_other = trip_travelers * stop_total_other_pp
 
-        if last_trip_id == doc['_id']:
-            # same trip, different stop - continue
-            last_stop_start_date = last_stop_end_date
-            last_stop_end_date = last_stop_start_date + \
-                timedelta(days=stop_duration)
+        last_stop_start_date = last_trip_start_date
 
-            # end date is max of current end date value and current stop end date
-            trip_end_date = max(trip_end_date, last_stop_end_date)
-
-            # cumulative totals
-            trip_total_accom += stop_total_accom
-            trip_total_food += stop_total_food
-            trip_total_other += stop_total_other
-
-            trip_total_accom_pp += stop_total_accom_pp
-            trip_total_food_pp += stop_total_food_pp
-            trip_total_other_pp += stop_total_other_pp
-
-            if not last_country == stop_country:
-                # increase counter if country has changed
-                trip_countries += 1
-
-                country_list = country_list + ' - ' + stop_country
-
-            # counters
-            trip_stops += 1
-            trip_duration += stop_duration
-
-        else:
+        if last_trip_id != doc['_id']:
             # new trip, new stop - reset
             last_trip_start_date = doc['start_date']
-            last_stop_start_date = last_trip_start_date
+
             last_stop_end_date = last_trip_start_date + \
                 timedelta(days=stop_duration)
 
@@ -622,14 +575,37 @@ def trip_detailed(trip_id):
             trip_start_date = doc['start_date']
             trip_end_date = last_stop_end_date
 
+            countries.append(stop_country)
             # counters
             trip_stops = 1
-            trip_countries = 1
             trip_duration = stop_duration
+        else:
+            # same trip, different stop - continue
+            last_stop_end_date = last_stop_start_date + \
+                timedelta(days=stop_duration)
+
+            # end date is max of current end date value and current stop end date
+            trip_end_date = max(trip_end_date, last_stop_end_date)
+
+            # cumulative totals
+            trip_total_accom += stop_total_accom
+            trip_total_food += stop_total_food
+            trip_total_other += stop_total_other
+
+            trip_total_accom_pp += stop_total_accom_pp
+            trip_total_food_pp += stop_total_food_pp
+            trip_total_other_pp += stop_total_other_pp
+
+            # if country is not already in list, add it
+            if stop_country not in countries:
+                countries.append(stop_country)
+
+            # counters
+            trip_stops += 1
+            trip_duration += stop_duration
 
         # outside loop
         last_trip_id = doc['_id']
-        last_country = stop_country
 
         trip_total_cost = trip_total_accom + trip_total_food + trip_total_other
         trip_total_cost_pp = trip_total_accom_pp + \
@@ -661,12 +637,11 @@ def trip_detailed(trip_id):
             'stop_total_food': stop_total_food,
             'stop_total_other': stop_total_other
         }
-
+        # add data to stops_detail array
         stops_detail.append(arr)
 
     if results > 0:
         # if the query return results continue (i.e. there were stops)
-
         trip_avg_cost_pn = trip_total_cost / trip_duration
 
         # create trip information dict
@@ -680,7 +655,7 @@ def trip_detailed(trip_id):
             'total_duration': trip_duration,
             'avg_cost_pn': trip_avg_cost_pn,
             'total_stops': trip_stops,
-            'total_countries': trip_countries,
+            'total_countries': len(countries),
             'trip_total_cost': trip_total_cost,
             'trip_total_cost_pp': trip_total_cost_pp,
             'total_accom_pp': trip_total_accom_pp,
@@ -692,36 +667,32 @@ def trip_detailed(trip_id):
         }
     else:
         # if there were no results, need to run query
-        trip_detail = trips.find_one({"_id": ObjectId(trip_id)})
+        trip_detail = TRIPS.find_one({"_id": ObjectId(trip_id)})
 
     return render_template('trip_detailed.html', trip=trip_detail,
                            stops=stops_detail)
 
-#
 # stops functionality
-#
-@app.route('/trip/<trip_id>/stop/new/', methods=['POST', 'GET'])
+@APP.route('/trip/<trip_id>/stop/new/', methods=['POST', 'GET'])
 def trip_stop_new(trip_id):
     '''
     Subject to user permissions, this enables a user to add new stops
     to their trip.
     '''
-    if not checkUserPermission():
+    if not check_user_permission():
         flash('Please login if you wish to perform this action')
         return redirect(url_for('trip_detailed', trip_id=trip_id))
 
     # check that the user has permission to add a new stop to this trip
-    trip = checkUserPermission(
-        checkLogin=True, checkTripOwner=True, trip_id=trip_id)
+    trip = check_user_permission(check_trip_owner=True, trip_id=trip_id)
 
     if trip:
-
         form = StopForm()
 
         if form.validate_on_submit():
             # create new entry if validation is successful
             try:
-                newStop = {
+                new_stop = {
                     'trip_id': ObjectId(trip_id),
                     'country': form.country.data.strip().title(),
                     'city_town': form.city_town.data.strip().title(),
@@ -732,80 +703,81 @@ def trip_stop_new(trip_id):
                     'cost_food': float(form.cost_food.data),
                     'cost_other': float(form.cost_other.data)
                 }
-                stops.insert_one(newStop)
+                STOPS.insert_one(new_stop)
                 flash('You have added a new stop to this trip')
 
-            except Exception as e:
-                print(e)
+            except Exception as ex:
+                print(ex)
                 flash('Database insertion error - please try again')
 
             # if form did not successful validate or there was an exception
             # error then redirect back to front page
             return redirect(url_for('trip_detailed', trip_id=trip_id))
         else:
-            trip_query = trips.find_one({'_id': ObjectId(trip_id)})
+            trip_query = TRIPS.find_one({'_id': ObjectId(trip_id)})
             prefix = 'trip_'  # used to identify trip form fields
             if trip_query:
                 for field in trip_query:
                     # populate the form with values from trip_query
-                    if (prefix + field) in form:
+                    if prefix + field in form:
                         # limit to only those fields which are in the form and
                         # in the database
                         form[(prefix + field)].data = trip_query[field]
 
+            # set form values
             form.current_stop_duration.data = 0
-            form.total_trip_duration.data = getTripDuration(trip_id)
+            form.total_trip_duration.data = get_trip_duration(trip_id)
+            form.duration.data = 1
 
             return render_template('stop_add_edit.html', form=form,
                                    action='new', trip=trip_query)
-    else:
-        # if no trip_id or user not logged in then redirect to show all trips
-        return redirect(url_for('show_trips'))
+
+    # if no trip_id or user not logged in then redirect to show all trips
+    return redirect(url_for('show_trips'))
 
 
-@app.route('/trip/<trip_id>/stop/<stop_id>/duplicate/',
+@APP.route('/trip/<trip_id>/stop/<stop_id>/duplicate/',
            methods=['POST', 'GET'])
 def trip_stop_duplicate(trip_id, stop_id):
     '''
     Duplicates a trip 'stop' for the user, to save time from filling in repeat
     fields, such as country, city, etc.
     '''
-    if not checkUserPermission():
+    if not check_user_permission():
         flash('Please login if you wish to perform this action')
         return redirect(url_for('trip_detailed', trip_id=trip_id))
 
     # check that the user has permission to add a new stop to this trip
-    stop = checkUserPermission(checkLogin=True, checkStopOwner=True,
-                               trip_id=trip_id, stop_id=stop_id)
-
+    stop = check_user_permission(check_stop_owner=True,
+                                 trip_id=trip_id, stop_id=stop_id)
     if stop:
-        copyOfStop = stops.find_one({'_id': ObjectId(stop_id),
-                                     'trip_id': ObjectId(trip_id)}, {'_id': 0})
+        copy_of_stop = STOPS.find_one({'_id': ObjectId(stop_id),
+                                       'trip_id': ObjectId(trip_id)}, {'_id': 0})
 
-        newStop = stops.insert_one(copyOfStop)
+        new_stop = STOPS.insert_one(copy_of_stop)
         flash('Stop added - you can modify the details below')
         return redirect(url_for('trip_stop_update', trip_id=trip_id,
-                                stop_id=newStop.inserted_id))
-    else:
-        flash(
-            'The stop you are trying to access does not exist or you do '
-            'not have permission to perform the action')
+                                stop_id=new_stop.inserted_id))
 
-        return redirect(url_for('trip_detailed', trip_id=trip_id))
+    # user does not have permission
+    flash(
+        'The stop you are trying to access does not exist or you do '
+        'not have permission to perform the action')
+    return redirect(url_for('trip_detailed', trip_id=trip_id))
 
 
-@app.route('/trip/<trip_id>/stop/<stop_id>/update/', methods=['POST', 'GET'])
+@APP.route('/trip/<trip_id>/stop/<stop_id>/update/', methods=['POST', 'GET'])
 def trip_stop_update(trip_id, stop_id):
     '''
     Subject to user permissions, this will enable a permitted user to update a
     stop within a trip they own.
     '''
-    if not checkUserPermission():
+    if not check_user_permission():
         flash('Please login if you wish to perform this action')
         return redirect(url_for('trip_detailed', trip_id=trip_id))
 
-    stop = checkUserPermission(checkLogin=True, checkStopOwner=True,
-                               trip_id=trip_id, stop_id=stop_id)
+    stop = check_user_permission(check_stop_owner=True,
+                                 trip_id=trip_id, stop_id=stop_id)
 
     if stop:
         form = StopForm()
@@ -813,11 +785,11 @@ def trip_stop_update(trip_id, stop_id):
         if form.validate_on_submit():
             # create new entry if validation is successful
             try:
-                updateCriteria = {
+                update_criteria = {
                     '_id': ObjectId(stop_id)
                 }
                 # build update query
-                updateQuery = {
+                update_query = {
                     '$set': {
                         'trip_id': ObjectId(trip_id),
                         'country': form.country.data.strip().title(),
@@ -832,19 +804,19 @@ def trip_stop_update(trip_id, stop_id):
                     }
                 }
 
-                stops.update_one(updateCriteria, updateQuery)
+                STOPS.update_one(update_criteria, update_query)
 
                 flash('The stop has been updated')
-            except Exception as e:
-                print(e)
+            except Exception as ex:
+                print(ex)
                 flash('Database insertion error - please try again')
 
             # if form did not successful validate or there was an exception
             # error then redirect back to front page
             return redirect(url_for('trip_detailed', trip_id=trip_id))
         else:
-            trip_query = trips.find_one({'_id': ObjectId(trip_id)})
-            stop_query = stops.find_one({'_id': ObjectId(stop_id)})
+            trip_query = TRIPS.find_one({'_id': ObjectId(trip_id)})
+            stop_query = STOPS.find_one({'_id': ObjectId(stop_id)})
 
             if trip_query and stop_query:
                 prefix = 'trip_'  # used to identify trip form fields
@@ -852,7 +824,7 @@ def trip_stop_update(trip_id, stop_id):
                 # update the form fields with trip data
                 for field in trip_query:
                     # populate the form with values from query
-                    if (prefix + field) in form:
+                    if prefix + field in form:
                         # limit to only those fields which are in the form and
                         # in the database
                         form[(prefix + field)].data = trip_query[field]
@@ -864,7 +836,7 @@ def trip_stop_update(trip_id, stop_id):
                         form[field].data = stop_query[field]
 
                 # set hidden varialbes
-                form.total_trip_duration.data = getTripDuration(trip_id)
+                form.total_trip_duration.data = get_trip_duration(trip_id)
                 form.current_stop_duration.data = stop_query['duration']
 
                 return render_template('stop_add_edit.html', form=form,
@@ -873,30 +845,29 @@ def trip_stop_update(trip_id, stop_id):
             else:
                 flash('The trip or stop you tried to access does not exist')
                 return redirect(url_for('show_trips'))
-    else:
-        # user does not own this trip
-        flash(
-            'The stop you are trying to access does not exist or you do '
-            'not have permission to perform the action')
+    # user does not own this trip
+    flash(
+        'The stop you are trying to access does not exist or you do '
+        'not have permission to perform the action')
 
-        return redirect(url_for('trip_detailed', trip_id=trip_id))
+    return redirect(url_for('trip_detailed', trip_id=trip_id))
 
 
-@app.route('/trip/<trip_id>/stop/<stop_id>/delete/')
+@APP.route('/trip/<trip_id>/stop/<stop_id>/delete/')
 def trip_stop_delete(trip_id, stop_id):
     '''
     Subject to user permissions, this will enable a user to delete a
     stop from a trip they own.
     '''
-    stop = checkUserPermission(checkLogin=True, checkStopOwner=True,
-                               trip_id=trip_id, stop_id=stop_id)
+    stop = check_user_permission(check_stop_owner=True,
+                                 trip_id=trip_id, stop_id=stop_id)
 
     if stop:
         query = {"_id": ObjectId(stop_id), "trip_id": ObjectId(trip_id)}
         # check that stop exists
-        if stops.find_one(query):
+        if STOPS.find_one(query):
             # if user owns this entry then delete
-            stops.delete_one(query)
+            STOPS.delete_one(query)
             flash('The stop has been removed from this trip')
         else:
             flash('The stop you are trying to delete does not exist')
@@ -910,11 +881,11 @@ def trip_stop_delete(trip_id, stop_id):
 #
 # user functionality
 #
-@app.route('/user/register/', methods=['POST', 'GET'])
+@APP.route('/user/register/', methods=['POST', 'GET'])
 def user_new():
     ''' This creates a new user in the database. '''
     # if the user is already logged in then redirect them
-    if checkUserPermission(checkLogin=True):
+    if check_user_permission():
         return redirect(url_for('show_trips'))
 
     form = RegistrationForm()
@@ -922,21 +893,21 @@ def user_new():
     if form.validate_on_submit():
         try:
             # create new entry if validation is successful
-            newUser = {
+            new_user = {
                 'username': form.username.data.strip().lower(),
                 'name': form.name.data.strip().title(),
                 'display_name': form.display_name.data.strip(),
                 'email': form.email.data.strip().lower(),
                 'password': ''
             }
-            users.insert_one(newUser)
+            USERS.insert_one(new_user)
 
             flash('A new account has been successfully created - you '
                   'can now login')
             return redirect(url_for('show_trips'))
 
-        except Exception as e:
-            print(e)
+        except Exception as ex:
+            print(ex)
             flash(
                 'There was a problem creating this user account - please '
                 'try again later')
@@ -945,13 +916,13 @@ def user_new():
 
 
 # login
-@app.route('/user/login/', methods=['POST', 'GET'])
+@APP.route('/user/login/', methods=['POST', 'GET'])
 def user_login():
     '''
     This enables a user to login, allowing them to perform CRUD
     operations on their own trips and/or stops.
     '''
-    if checkUserPermission():
+    if check_user_permission():
         # if user already logged in then redirect away from login page
         return redirect(url_for('show_trips'))
 
@@ -959,7 +930,7 @@ def user_login():
     # check input validation
     if form.validate_on_submit():
         # check that the username exists in the database
-        user = users.find_one({"username": form.username.data})
+        user = USERS.find_one({"username": form.username.data})
 
         if user:
             flash('You are now logged in to your account')
@@ -973,15 +944,15 @@ def user_login():
         else:
             flash('No user exists with this username - please try again')
             return redirect(url_for('user_login'))
-    else:
-        return render_template('user_login.html', form=form)
+    # if no form submitted, show login page
+    return render_template('user_login.html', form=form)
 
 
 # logout
-@app.route('/user/logout/')
+@APP.route('/user/logout/')
 def user_logout():
     ''' This logs a user out and removes and session variables. '''
-    if not checkUserPermission():
+    if not check_user_permission():
         # user is not logged in
         return redirect(url_for('show_trips'))
 
@@ -994,6 +965,6 @@ def user_logout():
 
 
 if __name__ == '__main__':
-    app.run(host=os.getenv('IP'),
+    APP.run(host=os.getenv('IP'),
             port=int(os.getenv('PORT')),
             debug=os.getenv('DEBUG'))
