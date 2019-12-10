@@ -6,7 +6,7 @@ from wtforms.validators import DataRequired, NumberRange, Email, Length, \
     ValidationError, InputRequired
 from flask_wtf import FlaskForm
 # import db connection and collection variables
-from db import USERS
+from util import USERS
 
 # Custom validation functions
 
