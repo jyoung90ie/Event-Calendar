@@ -1,4 +1,5 @@
-''' This file contains the main functionality and routing for the programme travelPal '''
+''' This file contains the main functionality and routing for the programme
+ travelPal. '''
 from datetime import timedelta
 import os
 from bson.objectid import ObjectId
@@ -118,7 +119,7 @@ def get_trip_duration(trip_id):
 def show_trips(show='all'):
     '''
     Shows a filtered list of trips from the DB - those marked as public and
-    those the user owners (if logged in, otherwise just public trips displayed)
+    those the user owners (if logged in, otherwise just public trips displayed).
     '''
 
     if check_user_permission():
@@ -928,7 +929,7 @@ def user_login():
     # check input validation
     if form.validate_on_submit():
         # check that the username exists in the database
-        user = USERS.find_one({"username": form.username.data})
+        user = USERS.find_one({"username": form.username.data.strip().lower()})
 
         if user:
             flash('You are now logged in to your account')
@@ -949,7 +950,7 @@ def user_login():
 # logout
 @APP.route('/user/logout/')
 def user_logout():
-    ''' This logs a user out and removes and session variables. '''
+    ''' This logs a user out and removes session variables. '''
     if not check_user_permission():
         # user is not logged in
         return redirect(url_for('show_trips'))

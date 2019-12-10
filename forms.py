@@ -20,7 +20,7 @@ def user_exists(for_login=False):
     when logging in.
     '''
     def _user_exists(form, field):
-        username = USERS.find_one({"username": field.data})
+        username = USERS.find_one({"username": field.data.strip().lower()})
 
         if for_login:
             if not username:
