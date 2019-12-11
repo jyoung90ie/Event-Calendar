@@ -241,7 +241,7 @@ def trip_new():
     """ This creates a new user in the database. """
     # check if the user is logged in - if not redirect them
     if not check_user_permission():
-        flash('Please login if you wish to perform this action')
+        flash('Please login if you wish to perform this action.')
         return redirect(url_for('show_trips'))
 
     form = TripForm()
@@ -258,12 +258,12 @@ def trip_new():
                 'owner_id': ObjectId(session.get('USERNAME'))
             }
             trip = TRIPS.insert_one(new_trip)
-            flash('New trip has been created - you can add stops below')
+            flash('New trip has been created - you can add stops below.')
 
             return redirect(url_for('trip_detailed',
                                     trip_id=trip.inserted_id))
         except:
-            flash('Database insertion error - please try again')
+            flash('Database insertion error - please try again.')
             # if there is an exception error, redirect to user's trips page
             return redirect(url_for('show_trips', show='user'))
 
@@ -283,7 +283,7 @@ def trip_update(trip_id):
         return redirect(url_for('show_trips'))
 
     if not check_user_permission():
-        flash('Please login if you wish to perform this action')
+        flash('Please login if you wish to perform this action.')
         return redirect(url_for('show_trips'))
 
     # check that the user has permission to update this trip
@@ -311,10 +311,10 @@ def trip_update(trip_id):
 
                 TRIPS.update_one(update_criteria, update_query)
 
-                flash('Your trip has been updated')
+                flash('Your trip has been updated.')
                 return redirect(url_for('trip_detailed', trip_id=trip_id))
             except:
-                flash('Database update error - please try again')
+                flash('Database update error - please try again.')
 
             # if error then redirect back to the update form with flash message
             return redirect(url_for('trip_update', trip_id=trip_id))
@@ -332,7 +332,7 @@ def trip_update(trip_id):
             return render_template('trip_add_edit.html', form=form,
                                    action='update', trip=trip_query)
         # trip does not exist
-        flash('The trip you tried to access does not exist')
+        flash('The trip you tried to access does not exist.')
         return redirect(url_for('show_trips'))
 
     # user does not own this trip, redirect to all trips
@@ -351,7 +351,7 @@ def trip_delete(trip_id):
         return redirect(url_for('show_trips'))
 
     if not check_user_permission():
-        flash('Please login if you wish to perform this action')
+        flash('Please login if you wish to perform this action.')
         return redirect(url_for('show_trips'))
 
     # check that the user has permission to update this trip
@@ -364,7 +364,7 @@ def trip_delete(trip_id):
 
         flash(
             'The trip and all associated stops have now been '
-            'deleted')
+            'deleted.')
         try:
             TRIPS.delete_one(trip_query)
             STOPS.delete_many(stops_query)
@@ -447,14 +447,6 @@ def trip_detailed(trip_id):
     except:
         # if there were any errors then redirect user back to homepage
         flash('There was an error performing this task. Please try again later.')
-        return redirect(url_for('show_trips'))
-
-    try:
-        # check to see if the trip exists (i.e. the query return results)
-        entry = cursor.next()
-    except StopIteration:
-        # if trip does not exist stop code execution and redirect
-        flash('The Trip you are trying to access does not exist.')
         return redirect(url_for('show_trips'))
 
     # if no problems with aggregation query, then continue to build data
@@ -596,11 +588,23 @@ def trip_detailed(trip_id):
             'total_other': trip_total_other,
         }
     else:
-        # if there were no results, need to run query
+        # there were no results from the aggregate query
+
+        # set trip_detail given no results
         trip_detail = TRIPS.find_one({"_id": ObjectId(trip_id)})
 
+        # check that the trip exists
+        if not trip_detail:
+            flash('The trip you are trying to access does not exist.')
+            return redirect(url_for('show_trips'))
+            
+        # if trip does not exist
+    
+    # if execution has made it to this point, then at the very least trip_detail has data
+    # render template
     return render_template('trip_detailed.html', trip=trip_detail,
-                           stops=stops_detail)
+                        stops=stops_detail)
+
 
 # stops functionality
 @APP.route('/trip/<trip_id>/stop/new/', methods=['POST', 'GET'])
@@ -615,7 +619,7 @@ def trip_stop_new(trip_id):
         return redirect(url_for('show_trips'))
 
     if not check_user_permission():
-        flash('Please login if you wish to perform this action')
+        flash('Please login if you wish to perform this action.')
         return redirect(url_for('trip_detailed', trip_id=trip_id))
 
     # check that the user has permission to add a new stop to this trip
@@ -639,9 +643,9 @@ def trip_stop_new(trip_id):
                     'cost_other': float(form.cost_other.data)
                 }
                 STOPS.insert_one(new_stop)
-                flash('You have added a new stop to this trip')
+                flash('You have added a new stop to this trip.')
             except:
-                flash('Database insertion error - please try again')
+                flash('Database insertion error - please try again.')
 
             # if the stop was added or there was an exception error then redirect
             # back to trip_detailed view with flash message
@@ -682,7 +686,7 @@ def trip_stop_duplicate(trip_id, stop_id):
         return redirect(url_for('show_trips'))
 
     if not check_user_permission():
-        flash('Please login if you wish to perform this action')
+        flash('Please login if you wish to perform this action.')
         return redirect(url_for('trip_detailed', trip_id=trip_id))
 
     # check that the user has permission to add a new stop to this trip
@@ -693,14 +697,14 @@ def trip_stop_duplicate(trip_id, stop_id):
                                        'trip_id': ObjectId(trip_id)}, {'_id': 0})
 
         new_stop = STOPS.insert_one(copy_of_stop)
-        flash('Stop added - you can modify the details below')
+        flash('Stop added - you can modify the details below.')
         return redirect(url_for('trip_stop_update', trip_id=trip_id,
                                 stop_id=new_stop.inserted_id))
 
     # user does not have permission
     flash(
         'The stop you are trying to access does not exist or you do '
-        'not have permission to perform the action')
+        'not have permission to perform the action.')
     return redirect(url_for('trip_detailed', trip_id=trip_id))
 
 
@@ -716,7 +720,7 @@ def trip_stop_update(trip_id, stop_id):
         return redirect(url_for('show_trips'))
 
     if not check_user_permission():
-        flash('Please login if you wish to perform this action')
+        flash('Please login if you wish to perform this action.')
         return redirect(url_for('trip_detailed', trip_id=trip_id))
 
     stop = check_user_permission(check_stop_owner=True,
@@ -750,9 +754,9 @@ def trip_stop_update(trip_id, stop_id):
 
                 STOPS.update_one(update_criteria, update_query)
 
-                flash('The stop has been updated')
+                flash('The stop has been updated.')
             except:
-                flash('Database insertion error - please try again')
+                flash('Database insertion error - please try again.')
 
             # if stop was updated or there was an exception error then redirect
             # back to trip_detailed view with flash message
@@ -787,12 +791,12 @@ def trip_stop_update(trip_id, stop_id):
                                        action='update', trip=trip_query,
                                        stop=stop_query)
             else:
-                flash('The trip or stop you tried to access does not exist')
+                flash('The trip or stop you tried to access does not exist.')
                 return redirect(url_for('show_trips'))
     # user does not own the trip
     flash(
         'The stop you are trying to access does not exist or you do '
-        'not have permission to perform the action')
+        'not have permission to perform the action.')
 
     return redirect(url_for('trip_detailed', trip_id=trip_id))
 
@@ -817,13 +821,13 @@ def trip_stop_delete(trip_id, stop_id):
         if STOPS.find_one(query):
             # if user owns this entry then delete
             STOPS.delete_one(query)
-            flash('The stop has been removed from this trip')
+            flash('The stop has been removed from this trip.')
         else:
-            flash('The stop you are trying to delete does not exist')
+            flash('The stop you are trying to delete does not exist.')
     else:
         flash(
             'The stop you are trying to access does not exist or you do '
-            'not have permission to perform the action')
+            'not have permission to perform the action.')
 
     return redirect(url_for('trip_detailed', trip_id=trip_id))
 
@@ -852,13 +856,13 @@ def user_new():
             USERS.insert_one(new_user)
 
             flash('A new account has been successfully created - you '
-                  'can now login')
+                  'can now login.')
             return redirect(url_for('show_trips'))
 
         except:
             flash(
                 'There was a problem creating this user account - please '
-                'try again later')
+                'try again later.')
     else:
         return render_template('user_register.html', form=form)
 
@@ -881,7 +885,7 @@ def user_login():
         user = USERS.find_one({"username": form.username.data.strip().lower()})
 
         if user:
-            flash('You are now logged in to your account')
+            flash('You are now logged in to your account.')
             # save mongodb user _id as session to indicate logged in
             # convert ObjectId to string
             session['USERNAME'] = str(user['_id'])
@@ -890,7 +894,7 @@ def user_login():
             # return user to 'My Trips' page
             return redirect(url_for('show_trips', show='user'))
         else:
-            flash('No user exists with this username - please try again')
+            flash('No user exists with this username - please try again.')
             return redirect(url_for('user_login'))
     # if no form submitted, show login page
     return render_template('user_login.html', form=form)
@@ -908,7 +912,7 @@ def user_logout():
     session.pop('USERNAME', None)
     session.pop('DISPLAY_NAME', None)
 
-    flash('You have been logged out')
+    flash('You have been logged out.')
     return redirect(url_for('show_trips'))
 
 
