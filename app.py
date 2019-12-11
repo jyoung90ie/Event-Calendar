@@ -228,7 +228,7 @@ def show_trips(show='all'):
     try:
         # run aggregation query and pass through to template
         get_trips = TRIPS.aggregate(pipeline)
-    except:
+    except Exception:
         # if any errors pass through nothing and template will deal with output
         get_trips = ''
 
@@ -262,7 +262,7 @@ def trip_new():
 
             return redirect(url_for('trip_detailed',
                                     trip_id=trip.inserted_id))
-        except:
+        except Exception:
             flash('Database insertion error - please try again.')
             # if there is an exception error, redirect to user's trips page
             return redirect(url_for('show_trips', show='user'))
@@ -280,10 +280,6 @@ def trip_update(trip_id):
     # check that the trip_id passed through is a valid ObjectId
     if not check_id(trip_id):
         flash('The trip you are trying to access does not exist.')
-        return redirect(url_for('show_trips'))
-
-    if not check_user_permission():
-        flash('Please login if you wish to perform this action.')
         return redirect(url_for('show_trips'))
 
     # check that the user has permission to update this trip
@@ -313,7 +309,7 @@ def trip_update(trip_id):
 
                 flash('Your trip has been updated.')
                 return redirect(url_for('trip_detailed', trip_id=trip_id))
-            except:
+            except Exception:
                 flash('Database update error - please try again.')
 
             # if error then redirect back to the update form with flash message
@@ -350,10 +346,6 @@ def trip_delete(trip_id):
         flash('The trip you are trying to access does not exist.')
         return redirect(url_for('show_trips'))
 
-    if not check_user_permission():
-        flash('Please login if you wish to perform this action.')
-        return redirect(url_for('show_trips'))
-
     # check that the user has permission to update this trip
     trip = check_user_permission(check_trip_owner=True, trip_id=trip_id)
 
@@ -368,7 +360,7 @@ def trip_delete(trip_id):
         try:
             TRIPS.delete_one(trip_query)
             STOPS.delete_many(stops_query)
-        except:
+        except Exception:
             flash("There was a problem removing the trip and/or it's associated stops."
                   "Please try again.")
     else:
@@ -444,7 +436,7 @@ def trip_detailed(trip_id):
     try:
         # run aggregation
         cursor = TRIPS.aggregate(stop_pipeline)
-    except:
+    except Exception:
         # if there were any errors then redirect user back to homepage
         flash('There was an error performing this task. Please try again later.')
         return redirect(url_for('show_trips'))
@@ -597,13 +589,11 @@ def trip_detailed(trip_id):
         if not trip_detail:
             flash('The trip you are trying to access does not exist.')
             return redirect(url_for('show_trips'))
-            
-        # if trip does not exist
-    
+
     # if execution has made it to this point, then at the very least trip_detail has data
     # render template
     return render_template('trip_detailed.html', trip=trip_detail,
-                        stops=stops_detail)
+                           stops=stops_detail)
 
 
 # stops functionality
@@ -644,7 +634,7 @@ def trip_stop_new(trip_id):
                 }
                 STOPS.insert_one(new_stop)
                 flash('You have added a new stop to this trip.')
-            except:
+            except Exception:
                 flash('Database insertion error - please try again.')
 
             # if the stop was added or there was an exception error then redirect
@@ -679,7 +669,7 @@ def trip_stop_duplicate(trip_id, stop_id):
     """
     Duplicates a trip 'stop' for the user, to save time from filling in repeat
     fields, such as country, city, etc.
-    """    
+    """
     # check that the trip_id and stop_id passed through are valid ObjectId's
     if not check_id(trip_id) or not check_id(stop_id):
         flash('The trip and/or stop you are trying to access do not exist.')
@@ -755,7 +745,7 @@ def trip_stop_update(trip_id, stop_id):
                 STOPS.update_one(update_criteria, update_query)
 
                 flash('The stop has been updated.')
-            except:
+            except Exception:
                 flash('Database insertion error - please try again.')
 
             # if stop was updated or there was an exception error then redirect
@@ -859,10 +849,9 @@ def user_new():
                   'can now login.')
             return redirect(url_for('show_trips'))
 
-        except:
-            flash(
-                'There was a problem creating this user account - please '
-                'try again later.')
+        except Exception:
+            flash('There was a problem creating this user account - please '
+                  'try again later.')
     else:
         return render_template('user_register.html', form=form)
 
