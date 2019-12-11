@@ -6,3 +6,4 @@ __pycache__/
 templates/originals/
 test_mongodb.py
 .vscode/
+test_query*
