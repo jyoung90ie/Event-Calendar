@@ -7,7 +7,7 @@ from flask import render_template, url_for, redirect, \
     flash, session
 # user created files
 from util import APP, TRIPS, USERS, STOPS, check_user_permission, \
-    get_trip_duration
+    get_trip_duration, check_id
 from forms import RegistrationForm, TripForm, StopForm, LoginForm
 
 
@@ -277,6 +277,11 @@ def trip_update(trip_id):
     Subject to user permissions, this will display an input form with
     values retrieved from the database to facilitate update.
     """
+    # check that the trip_id passed through is a valid ObjectId
+    if not check_id(trip_id):
+        flash('The trip you are trying to access does not exist.')
+        return redirect(url_for('show_trips'))
+
     if not check_user_permission():
         flash('Please login if you wish to perform this action')
         return redirect(url_for('show_trips'))
@@ -340,6 +345,11 @@ def trip_delete(trip_id):
     Subject to user permissions, this will delete a trip and all
     linked (via trip_id) stops.
     """
+    # check that the trip_id passed through is a valid ObjectId
+    if not check_id(trip_id):
+        flash('The trip you are trying to access does not exist.')
+        return redirect(url_for('show_trips'))
+
     if not check_user_permission():
         flash('Please login if you wish to perform this action')
         return redirect(url_for('show_trips'))
@@ -377,6 +387,10 @@ def trip_detailed(trip_id):
     owns this trip they will also be prompted with buttons to add, update,
     and delete various attributes.
     """
+    # check that the trip_id passed through is a valid ObjectId
+    if not check_id(trip_id):
+        flash('The trip you are trying to access does not exist.')
+        return redirect(url_for('show_trips'))
 
     # create array to contain all stops detail - produced via aggregate
     # then loop through cursor, creating new array which is passed to the
@@ -433,6 +447,14 @@ def trip_detailed(trip_id):
     except:
         # if there were any errors then redirect user back to homepage
         flash('There was an error performing this task. Please try again later.')
+        return redirect(url_for('show_trips'))
+
+    try:
+        # check to see if the trip exists (i.e. the query return results)
+        entry = cursor.next()
+    except StopIteration:
+        # if trip does not exist stop code execution and redirect
+        flash('The Trip you are trying to access does not exist.')
         return redirect(url_for('show_trips'))
 
     # if no problems with aggregation query, then continue to build data
@@ -587,6 +609,11 @@ def trip_stop_new(trip_id):
     Subject to user permissions, this enables a user to add new stops
     to their trip.
     """
+    # check that the trip_id passed through is a valid ObjectId
+    if not check_id(trip_id):
+        flash('The trip you are trying to access does not exist.')
+        return redirect(url_for('show_trips'))
+
     if not check_user_permission():
         flash('Please login if you wish to perform this action')
         return redirect(url_for('trip_detailed', trip_id=trip_id))
@@ -648,7 +675,12 @@ def trip_stop_duplicate(trip_id, stop_id):
     """
     Duplicates a trip 'stop' for the user, to save time from filling in repeat
     fields, such as country, city, etc.
-    """
+    """    
+    # check that the trip_id and stop_id passed through are valid ObjectId's
+    if not check_id(trip_id) or not check_id(stop_id):
+        flash('The trip and/or stop you are trying to access do not exist.')
+        return redirect(url_for('show_trips'))
+
     if not check_user_permission():
         flash('Please login if you wish to perform this action')
         return redirect(url_for('trip_detailed', trip_id=trip_id))
@@ -678,6 +710,11 @@ def trip_stop_update(trip_id, stop_id):
     Subject to user permissions, this will enable a permitted user to update a
     stop within a trip they own.
     """
+    # check that the trip_id and stop_id passed through are valid ObjectId's
+    if not check_id(trip_id) or not check_id(stop_id):
+        flash('The trip and/or stop you are trying to access do not exist.')
+        return redirect(url_for('show_trips'))
+
     if not check_user_permission():
         flash('Please login if you wish to perform this action')
         return redirect(url_for('trip_detailed', trip_id=trip_id))
@@ -766,6 +803,11 @@ def trip_stop_delete(trip_id, stop_id):
     Subject to user permissions, this will enable a user to delete a
     stop from a trip they own.
     """
+    # check that the trip_id and stop_id passed through are valid ObjectId's
+    if not check_id(trip_id) or not check_id(stop_id):
+        flash('The trip and/or stop you are trying to access do not exist.')
+        return redirect(url_for('show_trips'))
+
     stop = check_user_permission(check_stop_owner=True,
                                  trip_id=trip_id, stop_id=stop_id)
 

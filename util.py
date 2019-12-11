@@ -1,5 +1,6 @@
 """ This creates a connection to MongoDB and creates collection variables """
 import os
+import bson
 from bson.objectid import ObjectId
 from flask import Flask, flash, session
 from flask_pymongo import PyMongo
@@ -171,3 +172,12 @@ def check_duration():
                 raise ValidationError(message)
 
     return _check_duration
+
+
+def check_id(id):
+    """ Check that the id variable is a valid ObjectId. If it is return the ObjectId, 
+    if not, return False. """
+    try:
+        return ObjectId(id)
+    except bson.errors.InvalidId:
+        return False
