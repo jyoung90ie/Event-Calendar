@@ -1,3 +1,4 @@
+# pylint: disable=redefined-outer-name
 """ Test travelPal functionality. """
 import tempfile
 import pytest
@@ -16,6 +17,8 @@ def test_client():
     with APP.test_client() as test_client:
         yield test_client
 
+# helper functions used in the test functions
+
 
 def login(test_client, username):
     """ Helper function used to perform a user login. """
@@ -29,38 +32,17 @@ def logout(test_client):
     return test_client.get("/user/logout", follow_redirects=True)
 
 
-def register(test_client, username, name, display_name, email):
-    """ Helper function used to create a new user account. """
-    return test_client.post("/user/register",
-                            data=dict(
-                                username=username,
-                                name=name,
-                                display_name=display_name,
-                                email=email
-                            ),
-                            follow_redirects=True)
-
-
-def add_update_trip(test_client, url, name, travelers, start_date, public):
-    """ Helper function used to add a new trip or update an existing trip. """
-    return test_client.post(url,
-                            data=dict(
-                                name=name,
-                                travelers=travelers,
-                                start_date=start_date,
-                                public=public
-                            ),
-                            follow_redirects=True)
-
-
-def add_update_stop(test_client, url, form_data):
-    """ Helper function used to add a new stop or update an existing stop. """
+def submit_form(test_client, url, form_data):
+    """ Helper function used submit form data return the response.
+    'form_data' is a dict constructed to match the form input requirements. """
     return test_client.post(url, data=form_data, follow_redirects=True)
 
 
 def load_page(test_client, page):
     """ Helper function used to submit a GET request to a page. """
     return test_client.get(page, follow_redirects=True)
+
+# tests below this line
 
 
 def test_user_login_logout(test_client, username="john"):
@@ -94,7 +76,7 @@ def test_login(test_client, username, display_name, valid_username):
     assert response.status_code == 200
 
     if valid_username is True:
-        # if the username passed is an actual user then expect to see 
+        # if the username passed is an actual user then expect to see
         assert b"You are now logged in to your account" in response.data
         assert b"Welcome %s" % (display_name.encode("utf-8")) in response.data
         assert b"My Trips" in response.data
@@ -184,53 +166,65 @@ def test_invalid_page(test_client, page):
     assert b"does not exist" or b"do not exist" in response.data
 
 
-@pytest.mark.parametrize("form_data",
+@pytest.mark.parametrize("url,valid_entry,form_data",
                          [   # blank entries
-                             ({'username': '', 'name': '',
-                               'display_name': '', 'email': ''}),
+                             ("/user/register", False, {'username': '', 'name': '',
+                                                        'display_name': '',
+                                                        'email': ''}),
                              # user already exists
-                             ({'username': 'john', 'name': 'john',
-                               'display_name': 'john', 'email': 'john@john.com'})
+                             ("/user/register", False, {'username': 'john', 'name': 'john',
+                                                        'display_name': 'john',
+                                                        'email': 'john@john.com'}),
+                             # valid entry - should be successful the first time
+                             ("/user/register", True, {'username': 'a_new_user', 'name': 'New',
+                                                       'display_name': 'New User',
+                                                       'email': 'new@new.com'})
                          ])
-def test_register(test_client, form_data):
-    """ Attempt to register a new user with invalid data to ensure that invalid
-    data is not entered into the database. """
+def test_register(test_client, url, valid_entry, form_data):
+    """ Attempt to register a new user and test whether the data is handled correctly,
+    dependent on whether it is valid or not. """
     # clear session variables
     logout(test_client)
 
-    response = register(test_client, form_data['username'], form_data['name'],
-                        form_data['display_name'], form_data['email'])
+    response = submit_form(test_client, url, form_data)
 
     # check that page load was successful
     assert response.status_code == 200
-    # the below only shows if there has been a form input error
-    assert b'<span class="error">' in response.data
-    # the below message appears when an account has been created
-    assert b'A new account has been successfully created' not in response.data
+    # check if the entry is valid or not and test accordingly
+    if not valid_entry:
+        # the below only shows if there has been a form input error
+        assert b'<span class="error">' in response.data
+        # the below message appears when an account has been created
+        assert b'A new account has been successfully created' not in response.data
+    else:
+        # if this is a valid entry, expect to see inverse of above
+        assert b'<span class="error">' not in response.data
+        assert b'A new account has been successfully created' in response.data
 
 
 @pytest.mark.parametrize("url,valid_entry,form_data",
-                         [  # blank entries
-                            ("/trip/new", False, {
-                             'name': '', 'travelers': '',
-                             'start_date': '', 'public': ''}),
-                            # invalid start_date entry
-                            ("/trip/new", False, {
-                              'name': 'New Trip', 'travelers': '2',
-                              'start_date': '12 Decembers 2020', 'public': 'True'}),
-                            # invalid name entry (empty)
-                            ("/trip/new", False, {
-                              'name': '', 'travelers': '2',
-                              'start_date': '12 Dec 2020', 'public': 'asdasd'}),
-                            # invalid travelers entry (should be number)
-                            ("/trip/new", False, {
-                              'name': 'ASDASD', 'travelers': 'asdasd',
-                              'start_date': '12 Dec 2020', 'public': 'asdasd'}),
-                            # valid entry
-                            ("/trip/new", True, {
-                              'name': 'ASDASD', 'travelers': '3',
-                              'start_date': '12 Dec 2020', 'public': 'True'})
-                          ])
+                         [
+                             # blank entries
+                             ("/trip/new", False,
+                              {'name': '', 'travelers': '',
+                               'start_date': '', 'public': ''}),
+                             # invalid start_date entry
+                             ("/trip/new", False,
+                              {'name': 'New Trip', 'travelers': '2',
+                               'start_date': '12 Decembers 2020', 'public': 'True'}),
+                             # invalid name entry (empty)
+                             ("/trip/new", False,
+                              {'name': '', 'travelers': '2',
+                               'start_date': '12 Dec 2020', 'public': 'asdasd'}),
+                             # invalid travelers entry (should be number)
+                             ("/trip/new", False,
+                              {'name': 'ASDASD', 'travelers': 'asdasd',
+                               'start_date': '12 Dec 2020', 'public': 'asdasd'}),
+                             # valid entry
+                             ("/trip/new", True,
+                              {'name': 'ASDASD', 'travelers': '3',
+                               'start_date': '12 Dec 2020', 'public': 'True'})
+                         ])
 def test_add_update_trip_invalid_entry(test_client, url, valid_entry, form_data):
     """ Test that data entry in the new/update trips is correctly processed, dependent
     on whether the data entry is valid or not. """
@@ -238,12 +232,10 @@ def test_add_update_trip_invalid_entry(test_client, url, valid_entry, form_data)
     login(test_client, "john")
 
     # setup test
-    response = add_update_trip(test_client, url, form_data['name'], form_data['travelers'],
-                               form_data['start_date'], form_data['public'])
+    response = submit_form(test_client, url, form_data)
 
     # check that page load was successful
     assert response.status_code == 200
-    
 
     # check if the entry is valid or not and test accordingly
     if not valid_entry:
@@ -258,45 +250,52 @@ def test_add_update_trip_invalid_entry(test_client, url, valid_entry, form_data)
 
 @pytest.mark.parametrize("username,url,valid_entry,form_data",
                          [  # blank entry
-                            ("john", "/trip/5dee3e228f1db52b29cfce59/stop/new", False, {
-                              'country': '', 'city_town': '', 
-                              'currency': '', 'duration': '', 
-                              'cost_accommodation': '', 'cost_food': '', 'cost_other': ''}),
-                            # invalid entry for duration (should be a number)
-                            ("john", "/trip/5dee3e228f1db52b29cfce59/stop/new", False, {
-                              'country': 'Ireland', 'city_town': 'Dublin', 
-                              'currency': 'EUR', 'duration': 'NOTANUMBER', 
-                              'cost_accommodation': '50', 'cost_food': '20', 'cost_other': '15'}),
-                            # invalid entry for currency (should 3 characters long)
-                            ("john", "/trip/5dee3e228f1db52b29cfce59/stop/new", False, {
-                               'country': 'Ireland', 'city_town': 'Dublin', 
-                              'currency': 'EUROS', 'duration': '2', 
-                              'cost_accommodation': '50', 'cost_food': '20', 'cost_other': '15'}),
-                            # invalid entry for accom (should be a number)
-                            ('john', "/trip/5dee3e228f1db52b29cfce59/stop/new", False, {
-                             'country': 'Ireland', 'city_town': 'Dublin', 
-                             'currency': 'EUR', 'duration': '2', 
-                             'cost_accommodation': 'FIFTY', 'cost_food': '20', 'cost_other': '15'}),
-                            # invalid entry for food (should be a number)
-                            ("john", "/trip/5dee3e228f1db52b29cfce59/stop/new", False, {
-                             'country': 'Ireland', 'city_town': 'Dublin', 
-                             'currency': 'EUR', 'duration': '2', 
-                             'cost_accommodation': '50', 'cost_food': '20T', 'cost_other': '15'}),
-                            # invalid entry for other (should be a number)
-                            ("john", "/trip/5dee3e228f1db52b29cfce59/stop/new", False, {
-                             'country': 'Ireland', 'city_town': 'Dublin', 
-                             'currency': 'EUR', 'duration': '2', 
-                             'cost_accommodation': '50', 'cost_food': '20', 'cost_other': ''}),
-                            # missing form data for currency & duration
-                            ("john", "/trip/5dee3e228f1db52b29cfce59/stop/new", False, {
-                             'country': 'Ireland', 'city_town': 'Dublin', 
-                             'cost_accommodation': '50', 'cost_food': '20', 'cost_other': '22'}),
-                            # valid entry
-                            ("john", "/trip/5dee3e228f1db52b29cfce59/stop/new", True, {
-                             'country': 'Ireland', 'city_town': 'Dublin', 
-                             'currency': 'EUR', 'duration': '2', 
-                             'cost_accommodation': '50', 'cost_food': '20', 'cost_other': '22'})
-                          ])
+                             ("john", "/trip/5dee3e228f1db52b29cfce59/stop/new", False, {
+                                 'country': '', 'city_town': '', 'currency': '', 'duration': '',
+                                 'cost_accommodation': '', 'cost_food': '',
+                                 'cost_other': ''}),
+                             # invalid entry for duration (should be a number)
+                             ("john", "/trip/5dee3e228f1db52b29cfce59/stop/new", False, {
+                                 'country': 'Ireland', 'city_town': 'Dublin',
+                                 'currency': 'EUR', 'duration': 'NOTANUMBER',
+                                 'cost_accommodation': '50', 'cost_food': '20',
+                                 'cost_other': '15'}),
+                             # invalid entry for currency (should 3 characters long)
+                             ("john", "/trip/5dee3e228f1db52b29cfce59/stop/new", False, {
+                                 'country': 'Ireland', 'city_town': 'Dublin',
+                                 'currency': 'EUROS', 'duration': '2',
+                                 'cost_accommodation': '50', 'cost_food': '20',
+                                 'cost_other': '15'}),
+                             # invalid entry for accom (should be a number)
+                             ('john', "/trip/5dee3e228f1db52b29cfce59/stop/new", False, {
+                                 'country': 'Ireland', 'city_town': 'Dublin',
+                                 'currency': 'EUR', 'duration': '2',
+                                 'cost_accommodation': 'FIFTY', 'cost_food': '20',
+                                 'cost_other': '15'}),
+                             # invalid entry for food (should be a number)
+                             ("john", "/trip/5dee3e228f1db52b29cfce59/stop/new", False, {
+                                 'country': 'Ireland', 'city_town': 'Dublin',
+                                 'currency': 'EUR', 'duration': '2',
+                                 'cost_accommodation': '50', 'cost_food': '20T',
+                                 'cost_other': '15'}),
+                             # invalid entry for other (should be a number)
+                             ("john", "/trip/5dee3e228f1db52b29cfce59/stop/new", False, {
+                                 'country': 'Ireland', 'city_town': 'Dublin',
+                                 'currency': 'EUR', 'duration': '2',
+                                 'cost_accommodation': '50', 'cost_food': '20',
+                                 'cost_other': ''}),
+                             # missing form data for currency & duration
+                             ("john", "/trip/5dee3e228f1db52b29cfce59/stop/new", False, {
+                                 'country': 'Ireland', 'city_town': 'Dublin',
+                                 'cost_accommodation': '50', 'cost_food': '20',
+                                 'cost_other': '22'}),
+                             # valid entry
+                             ("john", "/trip/5dee3e228f1db52b29cfce59/stop/new", True, {
+                                 'country': 'Ireland', 'city_town': 'Dublin',
+                                 'currency': 'EUR', 'duration': '2',
+                                 'cost_accommodation': '50', 'cost_food': '20',
+                                 'cost_other': '22'})
+                         ])
 def test_add_update_stop_invalid_entry(test_client, username, url, valid_entry, form_data):
     """ Using a valid username and a valid trip_id, attempt to add a new stop
     using invalid data entries. This should not be permitted. """
@@ -306,7 +305,7 @@ def test_add_update_stop_invalid_entry(test_client, username, url, valid_entry, 
     login(test_client, username)
 
     # setup test
-    response = add_update_stop(test_client, url, form_data)
+    response = submit_form(test_client, url, form_data)
 
     # check that page load was successful
     assert response.status_code == 200
