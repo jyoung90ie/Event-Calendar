@@ -63,14 +63,16 @@ local currency, but have this converted to their home currency
 
 ## Technologies
 
-- HTML
-- CSS
-- JavaScript
-- [Materialize](https://materializecss.com/)
-- [Flask](https://palletsprojects.com/p/flask/)
-- [MongoDB](https://www.mongodb.com/)
-- [Heroku](https://www.heroku.com/)
-- [PyTest](https://docs.pytest.org/en/latest/)
+- HTML: used to provide the front-end structure
+- CSS: used to style my application
+- JavaScript: used to provide a more interative user interface
+- [JQuery](https://jquery.com/): used to provide easy access to DOM elements for manipulation
+- [Materialize](https://materializecss.com/): used to provide a positive user experience, such as a side navigation for 
+mobile devices, and a form datepicker field
+- [Flask](https://palletsprojects.com/p/flask/): used to write the application back-end 
+- [MongoDB](https://www.mongodb.com/): used to store and retrieve data inputs
+- [Heroku](https://www.heroku.com/): used for deployment
+- [PyTest](https://docs.pytest.org/en/latest/): used to perform thorough automated unit testing
 
 ## Database Schema
 
