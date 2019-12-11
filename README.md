@@ -75,6 +75,7 @@ local currency, but have this converted to their home currency
 ## Database Schema
 
 ### Users collection
+
 | Field name    | Type  
 |---------------|-------------
 | _id           | ObjectId 
@@ -97,6 +98,7 @@ local currency, but have this converted to their home currency
 |travelers     |      Int32
 
 ### Stops collection
+
 | Field name    | Type 
 |------------   |-------------
 |_id              |  ObjectId
@@ -137,23 +139,64 @@ to invoke database functions
 
 ### Automated Testing
 
-Need to setup python unit tests
+I used PyTest to perform a number of automated tests, I have outlined at a high level the extent of these tests below:
 
-### Results
+- Ensure that a user who is not logged in does not have access to routes they should not
+- Ensure that a user who is logged in is not able to change any trips/stops that they do not own
+- Ensure that a user is not permitted to enter invalid data, and if they do, this is not entered into the database
+- Ensure a user cannot manually manipulate route paths to view content they should not be able to access
 
-TBC
+The application implementation successfully passed the automated tests.
 
-### Test Coverage
-Using python coverage module
 
 ## Deployment
 
+### Heroku
 This application was deployed to Heroku using a git remote branch, to create your own deployment you will need to follow 
 the steps below:
 
 1) Create a MongoDB database with the collections noted in the *Database schema* section above
 2) You will then need to [Create an app in Heroku](https://devcenter.heroku.com/articles/creating-apps)
-3) Once you have created your Heroku app, you will need to create environment variables for those set out in the table you - see [Setup environment variables in Heroku](https://devcenter.heroku.com/articles/config-vars)
+3) Once you have created your Heroku app, you will need to create environment variables (see Environment Variables sub-section) - see [Setup environment variables in Heroku](https://devcenter.heroku.com/articles/config-vars)
+4) You will then need to use Git to push the code to Heroku - you can find out more at [Deploying with Git](https://devcenter.heroku.com/articles/git)
+
+**Please note:** To deploy a Heroku python web application you will need to ensure the following files exist in the root directory - both files exist within this repository.
+
+1) **Procfile**: this tells Heroku what type of application you are trying to deploy, and which file should be run when it is deployed
+2) **requirements.txt**: this tells Heroku what Python add-ons to download so that the deployment file can run correctly
+
+### Local
+
+If you wish to deploy this application to your local system, you can do so by following the steps below:
+
+1) Download and install Git to your computer - see [here](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git).
+2) Once you have installed Git, you will need to create a folder on your computer and then run the _git clone_ command. A demonstration of this code can be seen below:
+
+```terminal
+mkdir travelPal
+cd travelPal
+git clone https://github.com/jyoung90ie/travelPal.git
+```
+
+**_The following steps should all be performed while in the root folder of your travelPal git clone from step 2_**
+
+3) Download and install [Python](https://www.python.org/downloads/)
+4) Download the necessary python requirements. Open up a terminal or cmd prompt, and run the following code, 
+
+```
+pip install -r requirements.txt
+```
+
+5) Create a .env file and input the variables outlined in the Environment Variables sub-section
+6) Create a MongoDB database with the collections noted in the *Database schema* section above
+7) Run the file _app.py_ by executing the following command in terminal or cmd:
+```
+python app.py
+```
+8) Open up your preferred web browser and navigate to 'localhost:5000' to use the application
+
+
+### Environment Variables
 
 | Variable | Value 
 |----------|-------
@@ -162,9 +205,10 @@ the steps below:
 | SECRET_KEY| your-value-here
 | DEBUG | False
 | MONGODB_URI | [Obtaining your MongoDB URI](https://docs.atlas.mongodb.com/driver-connection/#connect-your-application) 
-4) You will then need to use Git to push the code to Heroku - you can find out more at [Deploying with Git](https://devcenter.heroku.com/articles/git)
 
-**Please note:** To deploy a Heroku python web application you will need to ensure the following files exist in the root directory - both files exist within this repository.
 
-1) **Procfile**: this tells Heroku what type of application you are trying to deploy, and which file should be run when it is deployed
-2)**requirements.txt**: this tells Heroku what Python add-ons to download so that the deployment file can run correctly
+## Credits
+
+### Media
+
+- The images used for the Trips listing page are sourced from [PlaceIMG](https://placeimg.com/)
