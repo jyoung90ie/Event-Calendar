@@ -1,77 +1,17 @@
-''' This sets out the structure and validation for each input form used '''
+""" This sets out the structure and validation for each input form used """
 from datetime import datetime, timedelta
 from wtforms import StringField, BooleanField, \
     IntegerField, DateTimeField, DecimalField, HiddenField
 from wtforms.validators import DataRequired, NumberRange, Email, Length, \
-    ValidationError, InputRequired
+    InputRequired
 from flask_wtf import FlaskForm
-# import db connection and collection variables
-from util import USERS
-
-# Custom validation functions
-
-
-def user_exists(for_login=False):
-    '''
-    Checks to see if a username exists in the database.
-
-    By default the check is used for ensuring no duplicate usernames when
-    registering. This is also used for checking that a username exists
-    when logging in.
-    '''
-    def _user_exists(form, field):
-        username = USERS.find_one({"username": field.data.strip().lower()})
-
-        if for_login:
-            if not username:
-                message = ('This user does not exist - please check your '
-                           'username and try again.')
-                raise ValidationError(message)
-        else:
-            if username:
-                message = ('This username is already in use, please try '
-                           'another.')
-                raise ValidationError(message)
-
-    return _user_exists
-
-
-def check_dates(start_date_field):
-    '''
-    Checks that the field this validator is attached to is
-    greater than the Start Date field supplied.
-    '''
-    message = 'End Date must take place after the Start Date.'
-
-    def _check_dates(form, field):
-
-        if field.data <= form[start_date_field].data:
-            raise ValidationError(message)
-
-    return _check_dates
-
-
-def check_duration():
-    '''
-    Simple validation to ensure that the duration of a single stop does
-    not exceed the total length of the trip (end date - start date)
-    '''
-    message = 'Duration cannot be longer than the time period of the trip'
-
-    def _check_duration(form, field):
-        trip_duration = (form.trip_end_date.data -
-                         form.trip_start_date.data)
-
-        if isinstance(field.data, int):
-            if field.data > trip_duration.days:
-                raise ValidationError(message)
-
-    return _check_duration
+# import custom validator
+from util import user_exists
 
 
 # Form setup
 class RegistrationForm(FlaskForm):
-    ''' Fields and validation for User Registration '''
+    """ Fields and validation for User Registration """
     username = StringField('Username',
                            validators=[DataRequired(), Length(min=3, max=32),
                                        user_exists()])
@@ -83,14 +23,14 @@ class RegistrationForm(FlaskForm):
 
 
 class LoginForm(FlaskForm):
-    ''' Fields and validation for User Login '''
+    """ Fields and validation for User Login """
     username = StringField('Username',
                            validators=[DataRequired(),
                                        user_exists(for_login=True)])
 
 
 class TripForm(FlaskForm):
-    ''' Fields and validation for Adding and Updating a Trip '''
+    """ Fields and validation for Adding and Updating a Trip """
     default_start = datetime.now()
     default_end = default_start + timedelta(days=1)
 
@@ -103,7 +43,7 @@ class TripForm(FlaskForm):
 
 
 class StopForm(FlaskForm):
-    ''' Fields and validation for Adding and Updating a Stop '''
+    """ Fields and validation for Adding and Updating a Stop """
     trip_name = StringField('Trip Name')
     total_trip_duration = HiddenField('Total Trip Duration')
     current_stop_duration = HiddenField('Current Stop Duration')
