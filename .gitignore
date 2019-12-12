@@ -5,5 +5,5 @@ init_tasks.sh
 __pycache__/
 templates/originals/
 test_mongodb.py
-forms.py
 .vscode/
+test_query*

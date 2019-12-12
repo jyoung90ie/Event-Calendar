@@ -9,21 +9,26 @@
 {% endif %}
 {% endblock %}
 
-
 {% block content %}
+<p><strong>travelPal</strong> helps you plan your travel abroad, making it easy to create trips with multiple
+	destinations, get an
+	idea for potential costs, and even browse other's trips for inspiration! <em>Why not start planning today?</em></p>
 <section class="row">
+	<h3>Trips</h3>
 	{% set results = {} %}
-	{% for trip in trips %}
+	{%- for trip in trips -%}
 	{# this is used to update the global results obj #}
 	{% set results = results.update({'populated': True}) %}
 
 	<div class="col s12 l6">
 		<div class="card medium sticky-action">
 			<div class="card-image waves-effect waves-block waves-light">
-				<img class="activator" src="https://placeimg.com/400/200/nature">
+				<img class="activator" src="https://placeimg.com/400/200/nature" alt="landscape image">
             </div>
 				<div class="card-content">
-					<span class="card-title activator grey-text text-darken-4">{{ trip['name'] }}</span>
+					<span class="card-title activator grey-text text-darken-4">
+                        <i class="material-icons">unfold_more</i>{{ trip['name'] }} 
+                    </span>
 					<p>{{ trip['start_date'].day }} {{ trip['start_date'].strftime('%b') }}
 						{{ trip['start_date'].year }} - {{ trip['end_date'].day }} {{ trip['end_date'].strftime('%b') }}
 						{{ trip['end_date'].year }}</p>
@@ -43,50 +48,68 @@
 				</div>
 				<div class="card-reveal">
 					<div class="card-content">
-						<span class="card-title grey-text text-darken-4">{{ trip['name'] }}</span>
-						<div class="trip-item">
-							<span class="title">number of travelers:</span>
-							<span class="description">{{ trip['travelers'] }}</span>
-						</div>
-						<div class="trip-item">
-							<span class="title">country:</span>
-							<span class="description">{{ trip['country'] if trip['country'] else 'N/A - no stops added' }}
+						<span class="card-title">
+                        <i class="material-icons">unfold_less</i>{{- trip['name'] }}
                     </span>
+						<div class="row">
+							<div class="col s6 m4">Number of Travelers:</div>
+							<div class="col s6 m8">{{ trip['travelers'] }}</div>
 						</div>
-						<div class="trip-item">
-							<span class="title">duration (nights):</span>
-							<span class="description">{{ trip['duration'] if trip['duration'] else 'N/A - no stops added' }}
-                    </span>
+						<div class="row">
+							<div class="col s6 m4">Countries:</div>
+							<div class="col s6 m8">
+								{{ trip['countries'] if trip['countries']  else 'N/A - no stops added' }}
+							</div>
 						</div>
-						<div class="trip-item">
-							<span class="title">number of stops:</span>
-							<span class="description">
-                        {{ trip['number_of_stops'] if trip['number_of_stops'] else 'N/A - no stops added' }}</span>
+						<div class="row">
+							<div class="col s6 m4">Dates:</div>
+							<div class="col s6 m8">
+								{{ trip['start_date'].day }} {{ trip['start_date'].strftime('%b') }}
+								{{ trip['start_date'].year }} - {{ trip['end_date'].day }}
+								{{ trip['end_date'].strftime('%b') }}
+								{{ trip['end_date'].year }}
+							</div>
 						</div>
-						<div class="trip-item">
-							<span class="title">total cost:</span>
-							<span class="description">
-                        {{ trip['total_cost'] if trip['total_cost'] else 'N/A - no stops added' }}
-                    </span>
+						<div class="row">
+							<div class="col s6 m4">Duration (nights):</div>
+							<div class="col s6 m8">
+								{{ trip['duration'] if trip['duration'] else 'N/A - no stops added' }}
+							</div>
 						</div>
-						<div class="trip-item">
-							<span class="title">creator:</span>
-							<span class="description">{{ trip['display_name'][0] }}</span>
+						<div class="row">
+							<div class="col s6 m4">Number of Stops:</div>
+							<div class="col s6 m8">
+								{{ trip['number_of_stops'] if trip['number_of_stops'] else 'N/A - no stops added' }}
+							</div>
 						</div>
-
+						<div class="row">
+							<div class="col s6 m4">Total Cost:</div>
+							<div class="col s6 m8">
+								{{ "%.2f" | format(trip['total_cost']) if trip['total_cost'] else 'N/A - no stops added' }}
+							</div>
+						</div>
+						<div class="row">
+							<div class="col s6 m4">Creator:</div>
+							<div class="col s6 m8">{{ trip['username'] }}</div>
+						</div>
 					</div>
 				</div>
 			</div>
 		</div>
+		{%- endfor -%}
 
-		{% endfor %}
-
-		{% if not results %}
-		<p>{{ 'You do not currently have any trips' if trips_showing == 'user' else 'There are currently no trips'}},
-			you
-			can
-			change this by clicking 'new trip' at the bottom of the screen</p>
-		{% endif %}
+		{% if not results -%}
+		<div class="col s12">
+			<h4 class="center">
+				{%- if session.get('USERNAME') %}
+				{{- 'You do not currently have any trips' if trips_showing == 'user' else 'There are currently no trips' -}},
+				you can change this by clicking 'new trip' at the bottom of the screen.
+				{%- else -%}
+				There are currently no trips to display. If you would like to add a trip, please register and login.
+				{%- endif -%}
+			</h4>
+		</div>
+		{%- endif %}
 </section>
 <!-- floating link to add a new trip - only if user logged in -->
 {% if session.get('USERNAME') %}
