@@ -109,13 +109,15 @@ def get_trip_duration(trip_id):
         # set total trip duration if query is successful
         get_total_duration = STOPS.aggregate(pipeline)
         total_duration = get_total_duration.next()['total_duration']
-    except:
+    except Exception:
         # if query throws exception set total_duration to zero
         total_duration = 0
 
     return total_duration
 
 # Custom validation for use in forms
+
+
 def user_exists(for_login=False):
     """
     Checks to see if a username exists in the database.
@@ -174,10 +176,10 @@ def check_duration():
     return _check_duration
 
 
-def check_id(id):
-    """ Check that the id variable is a valid ObjectId. If it is return the ObjectId, 
+def check_id(id_value):
+    """ Check that the id variable is a valid ObjectId. If it is return the ObjectId,
     if not, return False. """
     try:
-        return ObjectId(id)
+        return ObjectId(id_value)
     except bson.errors.InvalidId:
         return False
