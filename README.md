@@ -11,7 +11,23 @@ without being burdensome.
 
 ## UX Design
 
-The initial wireframes can be found [here](travelpal.pdf)
+The initial wireframes can be found [here](travelpal.pdf). 
+
+This was designed with the end user in mind, using a number of user stories to understand and develop a front-end UX to 
+cater to these needs. The resultant UX design makes use of Materialize to provide interactive design elements, such as,
+form input text transitions, and interactive cards. I have also embedded custom JavaScript to provide the user with 
+insightful information, such as, when adding a new stop to a trip, the user will see how the stop duration will impact 
+the overall end date of the trip.
+
+The nature of the navigation means the user is routed down a tree branch, to make sure the user knows exactly where they 
+are, on any page, I have included a breadcrumb navigation at the top of each page. This is in addition to the navigation
+bar at the top.
+
+Users are also only shown what they are permitted to see, for example, if a user is not logged in, then they will not be
+shown the options to add a new trip. Similiarly, if a user is logged in, but is not the owner of a given trip, they will
+not be shown the options to add stops, update/remove the trip. This makes it clear to the user what they can and can't 
+do.
+
 
 ### Users (User Stories)
 
@@ -146,9 +162,23 @@ I used PyTest to perform a number of automated tests, I have outlined at a high 
 - Ensure that a user who is not logged in does not have access to routes they should not
 - Ensure that a user who is logged in is not able to change any trips/stops that they do not own
 - Ensure that a user is not permitted to enter invalid data, and if they do, this is not entered into the database
+- Ensure that when a user enters valid data, this data is accepted and the correct responses are displayed to the user
 - Ensure a user cannot manually manipulate route paths to view content they should not be able to access
 
-The application implementation successfully passed the automated tests.
+### Results
+
+The testing undertaken resulted in the following bugs being discovered and addressed:
+
+- Usernames were case-sensitive; this was not intentional and as such all usernames are converted to lowercase before
+being compared and stored in the database
+- Using the WTForms default value for stop duration, when updating a stop, was overwriting the duration value pulled 
+from the database. To fix this I removed the default value from the template and assigned it in app.py under the 
+relevant route paths
+- Identified that the error handling for the trip_detailed view was not working as intended; if a valid ObjectId was 
+passed through as the trip_id, but the trip_id did not exist in the database an exception error was thrown. This was 
+addressed by moving the placement of the error handling.
+
+Following updates to address the above, the application works as intended, passing all manual and automated testing.
 
 
 ## Deployment
