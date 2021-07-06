@@ -1,0 +1,172 @@
+@import url('https://fonts.googleapis.com/css?family=Gloria+Hallelujah&display=swap');
+
+h1 {
+    font-family: 'Gloria Hallelujah', cursive;
+}
+
+.nav-wrapper {
+    background-color: rgb(231, 255, 254);
+}
+
+.nav-wrapper a, .nav-wrapper span {
+    color: #041748;
+    background-color: rgb(231, 255, 254);
+}
+
+.welcome {
+    margin: 0 20px;
+}
+
+.breadcrumb {
+    color: #000;
+}
+
+.breadcrumb:before {
+    color: #F57F17;
+}
+
+.breadcrumb:last-child {
+    color: #041748;
+}
+
+nav.breadcrumb-nav {
+    box-shadow: none;
+    line-height: 20px;
+    height: 20px;
+}
+
+.user-text {
+    color: #000;
+    font-size: 20px;
+    line-height: 3rem;
+    height: 100%;
+    margin: auto 0 auto 0;
+    width: 100%;
+    text-align: right;
+}
+
+.user-select {
+    max-width: 700px;
+    margin: 0 auto 0 auto;
+}
+
+.logo {
+    color: #041748;
+    border-bottom: 3px solid rgb(207, 255, 254);
+    padding-bottom: 5px;
+    max-width: 400px;
+    margin: 20px auto 20px auto;
+    text-align: center;
+}
+
+.logo-container {
+    width: 100%;
+    margin-bottom: 5vh;
+}
+
+.logo i {
+    color: #F57F17;
+    transform: rotate(-50deg);
+}
+
+nav {
+    margin-bottom: 20px;
+}
+
+
+/* button styling */
+
+.my-btn {
+    text-transform: lowercase;
+    font-size: 18px;
+    border-radius: 6px;
+}
+
+.my-btn-new {
+    background-color: rgb(104, 231, 180);
+}
+
+.my-btn-update {
+    background-color: rgb(104, 208, 231);
+}
+
+.my-btn-delete {
+    background-color: rgb(231, 126, 104);
+}
+
+/* override materialize hover colors */
+.my-btn-new:hover {
+    background-color: rgba(104, 231, 180, 0.5);
+}
+
+.my-btn-update:hover {
+    background-color: rgba(104, 208, 231, 0.5);
+}
+
+.my-btn-delete:hover {
+    background-color: rgba(231, 126, 104, 0.5);
+}
+
+
+/***
+    general styles
+ ***/
+
+/* form validation class */
+.error {
+    color: red;
+}
+
+/* override default anchor tag styling for clickable container  */
+.trip-btns {
+    color: #fff;
+    float: right;
+}
+
+/***
+    styles for trip listing page
+ ***/
+
+/* for smaller screens allow the user to scroll the card content */
+div .card-reveal .card-content {
+    overflow-y: scroll !important;
+}
+
+.card-content .row {
+    margin-top: 6px;
+    margin-bottom: 6px;
+}
+
+/***
+    styles for trip_detailed page
+ ***/
+
+ .trip-detailed-header {
+     text-transform: capitalize;
+     padding: 0 0 5px 10px;
+     border-bottom: 4px solid rgb(144, 217, 235);
+ }
+
+ .overview {
+    padding-left: 20px;
+    padding-right: 20px;
+ }
+
+.icons {
+    margin-left: auto;
+    
+}
+
+.icons i {
+    margin: 0;
+}
+
+.collapsible {
+    margin-left: 20px;
+    margin-right: 20px;
+}
+
+.total {
+    font-weight: bold;
+    background-color: rgb(248, 248, 248);
+}

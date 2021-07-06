@@ -1,0 +1,72 @@
+{% extends "template.html" %}
+
+{% block title %}{{'update' if action == 'update' else 'create new'}} trip{% endblock %}
+
+{%- block header -%}
+<a href="{{ url_for('show_trips') }}" class="breadcrumb">All Trips</a>
+{%- if action == 'update' %}
+<a href="{{ url_for('show_trips') }}" class="breadcrumb">My Trips</a>
+<a href="{{ url_for('trip_detailed', trip_id=trip['_id']) }}" class="breadcrumb">Trip:
+	<strong>{{ trip['name'] }}</strong></a>
+<a href="#!" class="breadcrumb">Update</a>
+{%- else %}
+<a href="#!" class="breadcrumb">New Trip</a>
+{%- endif -%}
+{%- endblock -%}
+
+{%- block content -%}
+<section>
+	<h5>
+		{%- if action == 'update' -%}
+		update your trip
+		{%- else -%}
+		create a new trip
+		{%- endif -%}
+	</h5>
+	<div class="row">
+		<div class="col s12">
+			<form method="POST" novalidate>
+				{{ form.hidden_tag() }}
+				<div class="row">
+					<div class="input-field col s12 m8">
+						{{ form.name.label }}
+						{{ form.name() }}
+						{% for error in form.name.errors %}
+						<span class="error">{{ error }}</span>
+						{% endfor %}
+					</div>
+					<div class="input-field col s12 m4">
+						{{ form.travelers.label }}
+						{{ form.travelers() }}
+						{%- for error in form.travelers.errors %}
+						<span class="error">{{ error }}</span>
+						{% endfor -%}
+					</div>
+					<div class="input-field col s12 m6">
+						{{ form.start_date.label }}
+						{{ form.start_date(readonly=true, class="datepicker readonly") }}
+						{%- for error in form.start_date.errors %}
+						<span class="error">{{ error }}</span>
+						{% endfor -%}
+					</div>
+				</div>
+				<div class="row">
+					<div class="input-field col s12">
+						<label>
+						{{ form.public(class="filled-in") }}
+                        <span>Display Trip to Public?</span>
+                        </label>
+						{%- for error in form.public.errors %}
+						<span class="error">{{ error }}</span>
+						{% endfor -%}
+					</div>
+				</div>
+				<button class="btn waves-effect waves-light" type="submit" name="submit" id="submit">
+                    {{- 'Update' if action == 'update' else 'Create' -}}
+                    <i class="material-icons right">{{- 'update' if action == 'update' else 'create' -}}</i>
+				</button>
+			</form>
+		</div>
+	</div>
+</section>
+{%- endblock -%}

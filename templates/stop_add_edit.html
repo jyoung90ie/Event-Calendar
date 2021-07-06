@@ -1,0 +1,150 @@
+{% extends "template.html" %}
+
+{% block title %}{{'update' if action == 'update' else 'add new'}} stop{% endblock %}
+
+{%- block header -%}
+<a href="{{ url_for('show_trips') }}" class="breadcrumb">My Trips</a>
+<a href="{{ url_for('trip_detailed', trip_id=trip['_id']) }}" class="breadcrumb">Trip:
+	<strong>{{ trip['name'] }}</strong></a>
+<a href="#!" class="breadcrumb">{{'Update' if action == 'update' else 'Add'}} Stop</a>
+{%- endblock -%}
+
+{%- block content -%}
+<section>
+	<h3>{{'Update Stop Details' if action == 'update' else 'Add a Stop to your Trip!'}}</h3>
+	<div class="row">
+		<div class="col s12">
+			<form method="POST" novalidate>
+				{{ form.hidden_tag() }}
+				<div class="row">
+					<div class="input-field col s12 l6">
+						{{ form.trip_name.label }}
+						{{ form.trip_name(readonly=true) }}
+					</div>
+					<div class="input-field col s12 m6 l3">
+						{{ form.trip_start_date.label }}
+						{{ form.trip_start_date(readonly=true) }}
+					</div>
+					<div class="input-field col s12 m6 l3">
+						{{ form.proj_end_date.label }}
+						{{ form.proj_end_date(readonly=true, value=" ") }}
+					</div>
+				</div>
+				<div class="row">
+					<div class="input-field col s12 m6 l4">
+						{{ form.country.label }}
+						{{ form.country() }}
+						{%- for error in form.country.errors %}
+						<span class="error">{{ error }}</span>
+						{% endfor -%}
+					</div>
+					<div class="input-field col s12 m6 l4">
+						{{ form.city_town.label }}
+						{{ form.city_town() }}
+						{%- for error in form.city_town.errors %}
+						<span class="error">{{ error }}</span>
+						{% endfor -%}
+					</div>
+				</div>
+				<div class="row">
+					<div class="input-field col s12 m6 l4">
+						{{ form.currency.label }}
+						{{ form.currency(maxlength=3) }}
+						{%- for error in form.currency.errors %}
+						<span class="error">{{ error }}</span>
+						{% endfor -%}
+					</div>
+					<div class="input-field col s12 m6 l4">
+						{{ form.duration.label }}
+						{{ form.duration() }}
+						{%- for error in form.duration.errors %}
+						<span class="error">{{ error }}</span>
+						{% endfor -%}
+					</div>
+				</div>
+				<p>Costs inputted below are per traveler (person), per night, they are <strong>not</strong> total
+					cost</p>
+				<div class="row">
+					<div class="input-field col s12 m4">
+						{{ form.cost_accommodation.label }}
+						{{ form.cost_accommodation() }}
+						{%- for error in form.cost_accommodation.errors %}
+						<span class="error">{{ error }}</span>
+						{% endfor -%}
+					</div>
+					<div class="input-field col s12 m4">
+						{{ form.cost_food.label }}
+						{{ form.cost_food() }}
+						{%- for error in form.cost_food.errors %}
+						<span class="error">{{ error }}</span>
+						{% endfor -%}
+					</div>
+					<div class="input-field col s12 m4">
+						{{ form.cost_other.label }}
+						{{ form.cost_other() }}
+						{%- for error in form.cost_other.errors %}
+						<span class="error">{{ error }}</span>
+						{% endfor -%}
+					</div>
+				</div>
+				<button class="btn waves-effect waves-light" type="submit" name="submit" id="submit">
+                    {{- 'Update' if action == 'update' else 'Add' -}} 
+                    <i class="material-icons right">create</i>
+                </button>
+			</form>
+		</div>
+	</div>
+</section>
+{%- endblock -%}
+
+{% block js %}
+<!-- code to update projected end date -->
+<script>
+	const startDate = $('#trip_start_date').val();
+	
+    /* get duration values */
+    const currentDuration = Number($('#current_stop_duration').val());
+    const totalDuration = Number($('#total_trip_duration').val());
+    
+    /* store duration field element in variable */
+    const newDuration = $('#duration');
+    
+	function setEndDate() {
+        const date = new Date(startDate);
+        let newDurationVal = Number(newDuration.val());
+
+        /* values of < 1 are not permitted */
+        if (newDurationVal < 1) {
+            newDurationVal = 1;
+            newDuration.val(newDurationVal);
+            alert("Duration must be one or more");
+        }
+
+        /* get the difference between the stop duration before it was updated and the current value */
+        const changeInDuration = newDurationVal - currentDuration;
+
+        /* take the duration difference (which can be +ve or -ve) and add to trip total duration */
+        const durationAdjustment = totalDuration + changeInDuration;
+
+        /* use setDate to update the end date by adding the number of days for duration to the trip start date */
+        date.setDate(date.getDate() + durationAdjustment);
+        
+        /* format date to DD MMM YYYY */
+        const splitDate = date.toDateString().split(' ');
+        const formattedDate = `${splitDate[2]} ${splitDate[1]} ${splitDate[3]}`;
+        
+        /*update the html element to show the new projected end date */
+        return $('#proj_end_date').val(formattedDate);
+    }
+
+    $( document ).ready(() => {
+        /* update form field with end date based on projection */
+        setEndDate();       
+    });
+	
+	newDuration.on('change', function() {
+        /* update form field with end date based on projection */
+        setEndDate();
+    });
+</script>
+{% endblock %}
